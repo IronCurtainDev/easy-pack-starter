@@ -1,0 +1,114 @@
+<?php
+
+namespace App\Entities\Settings;
+
+use App\Entities\BaseRepository;
+use App\Models\SettingGroup;
+
+class SettingGroupsRepository extends BaseRepository
+{
+    public function __construct(SettingGroup $model)
+    {
+        parent::__construct($model);
+    }
+
+    /**
+     * Find a setting group by slug.
+     *
+     * @param string $slug
+     * @return SettingGroup|null
+     */
+    public function findBySlug(string $slug): ?SettingGroup
+    {
+        return $this->model->where('slug', $slug)->first();
+    }
+
+    /**
+     * Find a setting group by slug or fail.
+     *
+     * @param string $slug
+     * @return SettingGroup
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     */
+    public function findBySlugOrFail(string $slug): SettingGroup
+    {
+        return $this->model->where('slug', $slug)->firstOrFail();
+    }
+
+    /**
+     * Get all groups with their settings.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getAllWithSettings()
+    {
+        return $this->model
+            ->with('settings')
+            ->orderBy('name')
+            ->get();
+    }
+
+    /**
+     * Create a new setting group.
+     *
+     * @param string $name
+     * @param string|null $slug
+     * @param string|null $description
+     * @return SettingGroup
+     */
+    public function createGroup(string $name, ?string $slug = null, ?string $description = null): SettingGroup
+    {
+        return $this->model->create([
+            'name' => $name,
+            'slug' => $slug ?? \Illuminate\Support\Str::slug($name),
+            'description' => $description,
+        ]);
+    }
+
+    /**
+     * Update a setting group.
+     *
+     * @param SettingGroup $group
+     * @param array $data
+     * @return SettingGroup
+     */
+    public function updateGroup(SettingGroup $group, array $data): SettingGroup
+    {
+        $group->update($data);
+        return $group->fresh();
+    }
+
+    /**
+     * Delete a setting group and optionally its settings.
+     *
+     * @param SettingGroup $group
+     * @param bool $deleteSettings
+     * @return bool
+     */
+    public function deleteGroup(SettingGroup $group, bool $deleteSettings = false): bool
+    {
+        if ($deleteSettings) {
+            $group->settings()->delete();
+        }
+
+        return $group->delete();
+    }
+
+    /**
+     * Check if a slug already exists.
+     *
+     * @param string $slug
+     * @param int|null $excludeId
+     * @return bool
+     */
+    public function slugExists(string $slug, ?int $excludeId = null): bool
+    {
+        $query = $this->model->where('slug', $slug);
+
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        return $query->exists();
+    }
+}

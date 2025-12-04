@@ -1,0 +1,173 @@
+<?php
+
+namespace {{ namespace }};
+
+use App\Http\Controllers\Controller;
+use App\Entities\{{entityGroup}}\{{entitySingular}};
+use App\Entities\{{entityGroup}}\{{entityGroup}}Repository;
+use EasyPack\ApiDocs\Docs\APICall;
+use EasyPack\ApiDocs\Docs\Param;
+use EasyPack\ApiDocs\Docs\ParamType;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+
+class {{ class }} extends Controller
+{
+    public function __construct(
+        protected {{entityGroup}}Repository $repository
+    ) {}
+
+    /**
+     * Get all {{entityGroupLower}}.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function index(Request $request): JsonResponse
+    {
+        document(function () {
+            return (new APICall())
+                ->setGroup('{{entityGroup}}')
+                ->setName('List {{entityGroup}}')
+                ->setDescription('Get a paginated list of {{entityGroupLower}}')
+                ->setParams([
+                    (new Param('per_page', ParamType::INTEGER, 'Number of items per page'))->optional(),
+                    (new Param('search', ParamType::STRING, 'Search term'))->optional(),
+                    (new Param('sort_by', ParamType::STRING, 'Field to sort by'))->optional(),
+                    (new Param('sort_direction', ParamType::STRING, 'Sort direction: asc or desc'))->optional(),
+                ])
+                ->setSuccessPaginatedObject({{entitySingular}}::class);
+        });
+
+        $perPage = $request->get('per_page', 15);
+        $search = $request->get('search');
+        $sortBy = $request->get('sort_by', 'created_at');
+        $sortDirection = $request->get('sort_direction', 'desc');
+
+        $items = $this->repository->paginateWithSearch($search, $perPage, $sortBy, $sortDirection);
+
+        return response()->apiSuccessPaginated($items);
+    }
+
+    /**
+     * Get a single {{entityLower}}.
+     *
+     * @param int $id
+     * @return JsonResponse
+     */
+    public function show(int $id): JsonResponse
+    {
+        document(function () {
+            return (new APICall())
+                ->setGroup('{{entityGroup}}')
+                ->setName('Get {{entitySingular}}')
+                ->setDescription('Get a single {{entityLower}} by ID')
+                ->setSuccessObject({{entitySingular}}::class);
+        });
+
+        $item = $this->repository->find($id);
+
+        if (!$item) {
+            return response()->apiNotFound('{{entitySingular}} not found.');
+        }
+
+        return response()->apiSuccess($item);
+    }
+
+    /**
+     * Create a new {{entityLower}}.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function store(Request $request): JsonResponse
+    {
+        document(function () {
+            return (new APICall())
+                ->setGroup('{{entityGroup}}')
+                ->setName('Create {{entitySingular}}')
+                ->setDescription('Create a new {{entityLower}}')
+                ->setParams([
+                    // TODO: Add your create parameters here
+                    // (new Param('name', ParamType::STRING, 'Name of the {{entityLower}}'))->required(),
+                ])
+                ->setSuccessObject({{entitySingular}}::class);
+        });
+
+        $validator = Validator::make($request->all(), $this->repository->getCreateRules());
+
+        if ($validator->fails()) {
+            return response()->apiValidationError($validator->errors());
+        }
+
+        $item = $this->repository->create($validator->validated());
+
+        return response()->apiSuccess($item, '{{entitySingular}} created successfully.', 201);
+    }
+
+    /**
+     * Update a {{entityLower}}.
+     *
+     * @param Request $request
+     * @param int $id
+     * @return JsonResponse
+     */
+    public function update(Request $request, int $id): JsonResponse
+    {
+        document(function () {
+            return (new APICall())
+                ->setGroup('{{entityGroup}}')
+                ->setName('Update {{entitySingular}}')
+                ->setDescription('Update an existing {{entityLower}}')
+                ->setParams([
+                    // TODO: Add your update parameters here
+                    // (new Param('name', ParamType::STRING, 'Name of the {{entityLower}}'))->optional(),
+                ])
+                ->setSuccessObject({{entitySingular}}::class);
+        });
+
+        $item = $this->repository->find($id);
+
+        if (!$item) {
+            return response()->apiNotFound('{{entitySingular}} not found.');
+        }
+
+        $validator = Validator::make($request->all(), $this->repository->getUpdateRules($id));
+
+        if ($validator->fails()) {
+            return response()->apiValidationError($validator->errors());
+        }
+
+        $item = $this->repository->update($id, $validator->validated());
+
+        return response()->apiSuccess($item, '{{entitySingular}} updated successfully.');
+    }
+
+    /**
+     * Delete a {{entityLower}}.
+     *
+     * @param int $id
+     * @return JsonResponse
+     */
+    public function destroy(int $id): JsonResponse
+    {
+        document(function () {
+            return (new APICall())
+                ->setGroup('{{entityGroup}}')
+                ->setName('Delete {{entitySingular}}')
+                ->setDescription('Delete a {{entityLower}}')
+                ->setSuccessMessageOnly();
+        });
+
+        $item = $this->repository->find($id);
+
+        if (!$item) {
+            return response()->apiNotFound('{{entitySingular}} not found.');
+        }
+
+        $this->repository->delete($id);
+
+        return response()->apiSuccess(null, '{{entitySingular}} deleted successfully.');
+    }
+}

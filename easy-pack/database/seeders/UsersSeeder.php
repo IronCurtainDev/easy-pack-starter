@@ -1,0 +1,84 @@
+<?php
+
+namespace EasyPack\Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+
+class UsersSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     * 
+     * Creates default users with admin role for testing/development.
+     * All seeded users have admin role to access dashboard and all features.
+     * Documentation generation can be performed by any user.
+     */
+    public function run(): void
+    {
+        // Get the User model class from the application
+        $userClass = config('auth.providers.users.model', \App\Models\User::class);
+
+        // Default password for all seeded users
+        $password = Hash::make('password');
+
+        // Create test user with admin role
+        $user = $userClass::updateOrCreate(
+            ['email' => 'test@example.com'],
+            [
+                'name' => 'Test User',
+                'password' => $password,
+                'email_verified_at' => now(),
+            ]
+        );
+        
+        // Sync roles to ensure only admin role is assigned
+        if (method_exists($user, 'syncRoles')) {
+            $user->syncRoles(['admin']);
+        } elseif (method_exists($user, 'assignRole')) {
+            $user->assignRole('admin');
+        }
+
+        $this->command->info('Created test user: test@example.com (admin)');
+
+        // Create admin user with admin role
+        $admin = $userClass::updateOrCreate(
+            ['email' => 'admin@example.com'],
+            [
+                'name' => 'Admin User',
+                'password' => $password,
+                'email_verified_at' => now(),
+            ]
+        );
+        
+        if (method_exists($admin, 'syncRoles')) {
+            $admin->syncRoles(['admin']);
+        } elseif (method_exists($admin, 'assignRole')) {
+            $admin->assignRole('admin');
+        }
+
+        $this->command->info('Created admin user: admin@example.com (admin)');
+
+        // Create super-admin user with super-admin role (has all permissions)
+        $superAdmin = $userClass::updateOrCreate(
+            ['email' => 'superadmin@example.com'],
+            [
+                'name' => 'Super Admin',
+                'password' => $password,
+                'email_verified_at' => now(),
+            ]
+        );
+        
+        if (method_exists($superAdmin, 'syncRoles')) {
+            $superAdmin->syncRoles(['super-admin']);
+        } elseif (method_exists($superAdmin, 'assignRole')) {
+            $superAdmin->assignRole('super-admin');
+        }
+
+        $this->command->info('Created super-admin user: superadmin@example.com (super-admin)');
+
+        $this->command->info('');
+        $this->command->info('All users have password: password');
+        $this->command->info('All users can access the admin dashboard.');
+    }
+}

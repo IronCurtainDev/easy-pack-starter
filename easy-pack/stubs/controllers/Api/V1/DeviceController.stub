@@ -1,0 +1,83 @@
+<?php
+
+namespace App\Http\Controllers\Api\V1;
+
+use EasyPack\Http\Controllers\Api\V1\DeviceController as BaseDeviceController;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+/**
+ * Custom Device Controller
+ *
+ * This controller extends the Easy Pack DeviceController to allow
+ * customization of device/token management logic.
+ *
+ * Available methods to override:
+ * - index(Request $request): JsonResponse - List user's devices
+ * - show(Request $request, $device): JsonResponse - Get device details
+ * - destroy(Request $request, $device): JsonResponse - Remove device
+ * - updatePushToken(Request $request): JsonResponse - Update push token
+ * - updateDevicePushToken(Request $request, $device): JsonResponse
+ * - logoutOthers(Request $request): JsonResponse - Logout other devices
+ *
+ * To enable this controller:
+ * Set EASYPACK_USE_LOCAL_API_CONTROLLERS=true in .env
+ * Or add to config/easypack.php:
+ *   'local_api_controllers' => ['device' => \App\Http\Controllers\Api\V1\DeviceController::class]
+ */
+class DeviceController extends BaseDeviceController
+{
+    /**
+     * Get all devices for the authenticated user.
+     *
+     * Override to customize device listing.
+     * Examples:
+     * - Add device location info
+     * - Include last activity details
+     * - Filter by device type
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function index(Request $request): JsonResponse
+    {
+        return parent::index($request);
+    }
+
+    /**
+     * Remove a device (logout from device).
+     *
+     * Override to add custom logout behavior.
+     * Examples:
+     * - Notify user of remote logout
+     * - Log security events
+     * - Clean up device-specific data
+     *
+     * @param Request $request
+     * @param mixed $device
+     * @return JsonResponse
+     */
+    public function destroy(Request $request, $device): JsonResponse
+    {
+        // Example: Log device removal for security audit
+        // Log::info('Device removed', [
+        //     'user_id' => $request->user()->id,
+        //     'device_id' => $device,
+        // ]);
+
+        return parent::destroy($request, $device);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Custom Methods
+    |--------------------------------------------------------------------------
+    |
+    | Add your custom device management methods below.
+    | Examples:
+    | - trustDevice(Request $request, $device): Mark device as trusted
+    | - setDeviceNickname(Request $request, $device): Set friendly name
+    | - getDeviceActivity(Request $request, $device): Get activity log
+    |
+    */
+}

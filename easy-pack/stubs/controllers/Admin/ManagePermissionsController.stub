@@ -1,0 +1,95 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use EasyPack\Http\Controllers\Manage\PermissionsController as BasePermissionsController;
+use Illuminate\Http\Request;
+use Spatie\Permission\Models\Permission;
+
+/**
+ * Custom Permissions Management Controller
+ *
+ * This controller extends the Easy Pack PermissionsController to allow
+ * customization of permission management logic in the admin panel.
+ *
+ * To enable this controller:
+ * Set EASYPACK_USE_LOCAL_ADMIN_CONTROLLERS=true in .env
+ * Or add to config/easypack.php:
+ *   'local_admin_controllers' => ['permissions' => \App\Http\Controllers\Admin\ManagePermissionsController::class]
+ */
+class ManagePermissionsController extends BasePermissionsController
+{
+    /**
+     * Display a listing of permissions.
+     *
+     * Override to customize permission listing.
+     * Examples:
+     * - Group by category/module
+     * - Show usage counts
+     * - Add filtering
+     *
+     * @return \Illuminate\View\View
+     */
+    public function index()
+    {
+        return parent::index();
+    }
+
+    /**
+     * Store a newly created permission.
+     *
+     * Override to customize permission creation.
+     * Examples:
+     * - Auto-create CRUD set (view, create, edit, delete)
+     * - Validate permission naming convention
+     * - Add to default admin role
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function store(Request $request)
+    {
+        return parent::store($request);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Custom Methods
+    |--------------------------------------------------------------------------
+    |
+    | Add your custom permission management methods below.
+    | Examples:
+    | - createCrudSet(Request $request): Create view, create, edit, delete permissions
+    | - syncFromConfig(): Sync permissions from config file
+    | - exportPermissions(): Export permissions list
+    |
+    */
+
+    /**
+     * Create a CRUD permission set for a resource.
+     *
+     * Example custom method.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    // public function createCrudSet(Request $request)
+    // {
+    //     $validated = $request->validate([
+    //         'resource' => 'required|string|max:50|alpha_dash',
+    //     ]);
+    //
+    //     $resource = strtolower($validated['resource']);
+    //     $permissions = ['view', 'create', 'edit', 'delete'];
+    //
+    //     foreach ($permissions as $action) {
+    //         Permission::firstOrCreate([
+    //             'name' => "{$action}-{$resource}",
+    //             'guard_name' => 'sanctum',
+    //         ]);
+    //     }
+    //
+    //     return redirect()->route('manage.permissions.index')
+    //         ->with('success', "CRUD permissions created for '{$resource}'.");
+    // }
+}

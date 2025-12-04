@@ -1,0 +1,166 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use EasyPack\Http\Controllers\Manage\UsersController as BaseUsersController;
+use EasyPack\Models\User;
+use Illuminate\Http\Request;
+
+/**
+ * Custom Users Management Controller
+ *
+ * This controller extends the Easy Pack UsersController to allow
+ * customization of user management logic in the admin panel.
+ *
+ * Available methods to override:
+ * - index(Request $request) - List users
+ * - create() - Show create form
+ * - store(Request $request) - Create user
+ * - show(User $user) - Show user details
+ * - edit(User $user) - Show edit form
+ * - update(Request $request, User $user) - Update user
+ * - destroy(User $user) - Delete user
+ * - editPassword(User $user) - Show password form
+ * - updatePassword(Request $request, User $user) - Update password
+ * - toggleDisabled(User $user) - Enable/disable user
+ * - revokeTokens(User $user) - Revoke all tokens
+ *
+ * To enable this controller:
+ * Set EASYPACK_USE_LOCAL_ADMIN_CONTROLLERS=true in .env
+ * Or add to config/easypack.php:
+ *   'local_admin_controllers' => ['users' => \App\Http\Controllers\Admin\ManageUsersController::class]
+ */
+class ManageUsersController extends BaseUsersController
+{
+    /**
+     * Display a listing of users.
+     *
+     * Override to customize user listing.
+     * Examples:
+     * - Add custom filters
+     * - Include additional relationships
+     * - Change default sorting
+     * - Add export functionality
+     *
+     * @param Request $request
+     * @return \Illuminate\View\View
+     */
+    public function index(Request $request)
+    {
+        // Add custom query modifications if needed
+        return parent::index($request);
+    }
+
+    /**
+     * Store a newly created user.
+     *
+     * Override to customize user creation.
+     * Examples:
+     * - Add custom fields (department, employee_id)
+     * - Send welcome email
+     * - Create related records
+     * - Assign default permissions
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function store(Request $request)
+    {
+        // Add custom validation for additional fields
+        // $request->validate([
+        //     'department_id' => 'required|exists:departments,id',
+        //     'employee_id' => 'required|string|unique:users,employee_id',
+        // ]);
+
+        $response = parent::store($request);
+
+        // Add post-creation logic
+        // $user = User::where('email', $request->email)->first();
+        // $user->notify(new WelcomeNotification());
+
+        return $response;
+    }
+
+    /**
+     * Update the specified user.
+     *
+     * Override to customize user updates.
+     * Examples:
+     * - Handle custom fields
+     * - Log changes for audit
+     * - Update related records
+     *
+     * @param Request $request
+     * @param User $user
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function update(Request $request, User $user)
+    {
+        return parent::update($request, $user);
+    }
+
+    /**
+     * Remove the specified user.
+     *
+     * Override to customize user deletion.
+     * Examples:
+     * - Soft delete instead of hard delete
+     * - Archive user data
+     * - Clean up related records
+     * - Send notification
+     *
+     * @param User $user
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function destroy(User $user)
+    {
+        // Add pre-deletion logic if needed
+        // $user->orders()->update(['deleted_by_admin' => true]);
+
+        return parent::destroy($user);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Custom Methods
+    |--------------------------------------------------------------------------
+    |
+    | Add your custom user management methods below.
+    | Examples:
+    | - export(Request $request): Export users to CSV/Excel
+    | - import(Request $request): Bulk import users
+    | - impersonate(User $user): Login as user (for support)
+    | - sendNotification(User $user): Send custom notification
+    |
+    */
+
+    /**
+     * Export users to CSV.
+     *
+     * Example custom method.
+     *
+     * @param Request $request
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse
+     */
+    // public function export(Request $request)
+    // {
+    //     $users = User::with('roles')->get();
+    //
+    //     return response()->streamDownload(function () use ($users) {
+    //         $file = fopen('php://output', 'w');
+    //         fputcsv($file, ['ID', 'Name', 'Email', 'Roles', 'Created At']);
+    //
+    //         foreach ($users as $user) {
+    //             fputcsv($file, [
+    //                 $user->id,
+    //                 $user->name,
+    //                 $user->email,
+    //                 $user->roles->pluck('name')->implode(', '),
+    //                 $user->created_at->format('Y-m-d H:i:s'),
+    //             ]);
+    //         }
+    //
+    //         fclose($file);
+    //     }, 'users.csv');
+    // }
+}

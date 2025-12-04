@@ -1,0 +1,305 @@
+<?php
+
+namespace App\Entities\Users;
+
+use App\Entities\BaseRepository;
+use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\Request;
+
+/**
+ * Users Repository
+ *
+ * This repository provides methods for querying and managing User models.
+ * It extends the BaseRepository to inherit common functionality and adds
+ * user-specific methods.
+ *
+ * Usage:
+ *   $usersRepo = app(UsersRepository::class);
+ *   $user = $usersRepo->findByEmail('user@example.com');
+ *   $admins = $usersRepo->getUsersInRole(['admin', 'super-admin']);
+ */
+class UsersRepository extends BaseRepository
+{
+    /**
+     * Get the model class for this repository.
+     *
+     * @return string
+     */
+    protected function getModelClass(): string
+    {
+        return User::class;
+    }
+
+    /**
+     * Find a user by email.
+     *
+     * @param string $email
+     * @return User|null
+     */
+    public function findByEmail(string $email): ?User
+    {
+        return $this->findFirstBy('email', $email);
+    }
+
+    /**
+     * Get a user by email (only active users by default).
+     *
+     * @param string $email
+     * @param bool $onlyActiveUsers
+     * @return User|null
+     */
+    public function getUserByEmail(string $email, bool $onlyActiveUsers = true): ?User
+    {
+        $query = $this->getModel()->newQuery()->where('email', $email);
+
+        if ($onlyActiveUsers) {
+            $query->whereNull('disabled_at');
+        }
+
+        return $query->first();
+    }
+
+    /**
+     * Get users who belong to specified roles.
+     *
+     * @param array $roleNames
+     * @param Collection|null $excludeUsers
+     * @param bool $onlyActive
+     * @return Collection
+     */
+    public function getUsersInRole(
+        array $roleNames,
+        ?Collection $excludeUsers = null,
+        bool $onlyActive = true
+    ): Collection {
+        $query = $this->getModel()->newQuery();
+
+        // Get only active users
+        if ($onlyActive) {
+            $query->whereNull('disabled_at');
+        }
+
+        $query->whereHas('roles', function (Builder $q) use ($roleNames) {
+            $q->whereIn('name', $roleNames);
+        });
+
+        if ($excludeUsers) {
+            $query->whereNotIn('id', $excludeUsers->pluck('id'));
+        }
+
+        return $query->get();
+    }
+
+    /**
+     * Search users in specified roles with pagination.
+     *
+     * @param array $roleNames
+     * @param string|null $searchQuery
+     * @param int|null $perPage
+     * @param array $orderBy
+     * @param array $relationships
+     * @param Collection|null $excludeUsers
+     * @param bool $onlyActive
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
+    public function searchUsersInRole(
+        array $roleNames,
+        ?string $searchQuery = null,
+        ?int $perPage = null,
+        array $orderBy = [],
+        array $relationships = [],
+        ?Collection $excludeUsers = null,
+        bool $onlyActive = true
+    ) {
+        $searchQuery = $searchQuery ?: request()->get('q');
+        $query = $this->getModel()->newQuery();
+
+        // Apply search
+        if ($searchQuery) {
+            $query->where(function (Builder $q) use ($searchQuery) {
+                $q->where('name', 'like', "%{$searchQuery}%")
+                  ->orWhere('email', 'like', "%{$searchQuery}%");
+
+                // Search in first_name/last_name if columns exist
+                if (\Schema::hasColumn('users', 'first_name')) {
+                    $q->orWhere('first_name', 'like', "%{$searchQuery}%");
+                }
+                if (\Schema::hasColumn('users', 'last_name')) {
+                    $q->orWhere('last_name', 'like', "%{$searchQuery}%");
+                }
+            });
+        }
+
+        // Get only active users
+        if ($onlyActive) {
+            $query->whereNull('disabled_at');
+        }
+
+        // Default ordering
+        $query->orderBy('id', 'desc');
+
+        // Apply custom ordering
+        foreach ($orderBy as $orderCol => $orderDirection) {
+            $query->orderBy($orderCol, $orderDirection);
+        }
+
+        // Load relationships
+        if (!empty($relationships)) {
+            $query->with($relationships);
+        }
+
+        // Filter by roles
+        $query->whereHas('roles', function (Builder $q) use ($roleNames) {
+            $q->whereIn('name', $roleNames);
+        });
+
+        // Exclude users
+        if ($excludeUsers) {
+            $query->whereNotIn('id', $excludeUsers->pluck('id'));
+        }
+
+        $perPage = $perPage ?: config('easypack.dashboard.perPage', 20);
+
+        return $query->paginate($perPage);
+    }
+
+    /**
+     * Disable a user account.
+     *
+     * @param User $user
+     * @return User
+     */
+    public function disable(User $user): User
+    {
+        $user->disabled_at = Carbon::now();
+
+        if (auth()->user()) {
+            $user->disabled_by_user_id = auth()->id();
+        }
+
+        $user->save();
+
+        // Optionally revoke all tokens
+        // $user->tokens()->delete();
+
+        return $user;
+    }
+
+    /**
+     * Enable a user account.
+     *
+     * @param User $user
+     * @return User
+     */
+    public function enable(User $user): User
+    {
+        $user->disabled_at = null;
+        // We intentionally don't remove disabled_by_user_id for audit trail
+        $user->save();
+
+        return $user;
+    }
+
+    /**
+     * Get users created within a date range.
+     *
+     * @param Carbon|string $startDate
+     * @param Carbon|string $endDate
+     * @return Collection
+     */
+    public function getByDateRange($startDate, $endDate): Collection
+    {
+        return $this->getModel()
+            ->newQuery()
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    /**
+     * Get users who haven't verified their email.
+     *
+     * @return Collection
+     */
+    public function getUnverified(): Collection
+    {
+        return $this->getModel()
+            ->newQuery()
+            ->whereNull('email_verified_at')
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    /**
+     * Get users with specific permissions.
+     *
+     * @param array $permissionNames
+     * @return Collection
+     */
+    public function getUsersWithPermissions(array $permissionNames): Collection
+    {
+        return $this->getModel()
+            ->newQuery()
+            ->permission($permissionNames)
+            ->get();
+    }
+
+    /**
+     * Search users for admin listing.
+     *
+     * @param Request $request
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
+    public function searchForAdmin(Request $request)
+    {
+        $query = $this->getModel()->newQuery()->with('roles');
+
+        // Search
+        if ($search = $request->get('search')) {
+            $query->where(function (Builder $q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter by role
+        if ($role = $request->get('role')) {
+            $query->whereHas('roles', function (Builder $q) use ($role) {
+                $q->where('name', $role);
+            });
+        }
+
+        // Filter by status
+        if ($request->has('status')) {
+            $status = $request->get('status');
+            if ($status === 'active') {
+                $query->whereNull('disabled_at');
+            } elseif ($status === 'disabled') {
+                $query->whereNotNull('disabled_at');
+            }
+        }
+
+        // Sorting
+        $sortBy = $request->get('sort_by', 'created_at');
+        $sortDir = $request->get('sort_dir', 'desc');
+        $query->orderBy($sortBy, $sortDir);
+
+        return $query->paginate($request->get('per_page', 20));
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Custom Methods
+    |--------------------------------------------------------------------------
+    |
+    | Add your custom user repository methods below.
+    | Examples:
+    | - getRecentlyActive(): Users active in last 24 hours
+    | - getBySubscriptionPlan($planId): Users on specific subscription
+    | - getTopContributors(): Users with most posts/comments
+    |
+    */
+}

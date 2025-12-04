@@ -1,0 +1,119 @@
+<?php
+
+namespace App\Models;
+
+use EasyPack\Models\PersonalAccessToken as BasePersonalAccessToken;
+
+/**
+ * App Personal Access Token Model
+ *
+ * This model extends the Easy Pack PersonalAccessToken model and allows
+ * you to customize token attributes, scopes, and behavior for your app.
+ *
+ * The base class provides:
+ * - Device tracking (device_id, device_type, device_push_token)
+ * - Token expiry management
+ * - IP address tracking
+ * - Topic subscriptions for push notifications
+ *
+ * You can override any method or property from the base class.
+ */
+class PersonalAccessToken extends BasePersonalAccessToken
+{
+    /**
+     * Default token expiry in days.
+     * Override this to change the default expiry time.
+     */
+    public const DEFAULT_EXPIRY_DAYS = 90;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'name',
+        'token',
+        'abilities',
+        'expires_at',
+        'device_id',
+        'device_type',
+        'device_push_token',
+        'latest_ip_address',
+        'topic_subscriptions',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'abilities' => 'json',
+        'last_used_at' => 'datetime',
+        'expires_at' => 'datetime',
+        'topic_subscriptions' => 'array',
+    ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'token',
+        'abilities',
+        'topic_subscriptions',
+    ];
+
+    /**
+     * The attributes that should be visible for serialization.
+     *
+     * @var array<int, string>
+     */
+    protected $visible = [
+        'id',
+        'name',
+        'device_id',
+        'device_type',
+        'latest_ip_address',
+        'last_used_at',
+        'expires_at',
+        'is_current',
+        'is_expired',
+        'created_at',
+        'updated_at',
+    ];
+
+    /**
+     * The attributes appended to the model's array form.
+     *
+     * @var array<int, string>
+     */
+    protected $appends = [
+        'is_current',
+        'is_expired',
+    ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | Custom Methods
+    |--------------------------------------------------------------------------
+    |
+    | Add your custom token methods below. You can also override any method
+    | from the base EasyPack\Models\PersonalAccessToken class.
+    |
+    | Available methods to override:
+    | - scopeActive($query) - Get only active (non-expired) tokens
+    | - scopeExpired($query) - Get only expired tokens
+    | - scopeForUser($query, $userId) - Get tokens for a specific user
+    | - scopeOfDeviceType($query, $deviceType) - Filter by device type
+    | - isExpired(): bool - Check if token is expired
+    | - isActive(): bool - Check if token is active
+    | - refreshToken($expiryDays): string - Refresh token and extend expiry
+    | - extendExpiry($expiryDays): bool - Extend expiry without changing token
+    | - revoke(): bool - Revoke (delete) the token
+    | - toDeviceArray(): array - Get displayable device summary
+    |
+    */
+}

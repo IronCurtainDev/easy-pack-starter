@@ -1,0 +1,100 @@
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use EasyPack\Http\Controllers\Auth\LoginController as BaseLoginController;
+use Illuminate\Http\Request;
+
+/**
+ * Custom Login Controller
+ *
+ * This controller extends the Easy Pack LoginController to allow
+ * customization of web-based authentication logic.
+ *
+ * Available methods to override:
+ * - showLoginForm() - Show login page
+ * - login(Request $request) - Handle login
+ * - logout(Request $request) - Handle logout
+ *
+ * To enable this controller, update routes/web.php to use this controller
+ * instead of the package controller.
+ */
+class LoginController extends BaseLoginController
+{
+    /**
+     * Show the login form.
+     *
+     * Override to customize the login page.
+     * Examples:
+     * - Use a custom view
+     * - Add additional data to the view
+     * - Check for maintenance mode
+     *
+     * @return \Illuminate\View\View
+     */
+    public function showLoginForm()
+    {
+        // Use custom view or add data
+        // return view('auth.login', ['customData' => 'value']);
+
+        return parent::showLoginForm();
+    }
+
+    /**
+     * Handle a login request.
+     *
+     * Override to customize login behavior.
+     * Examples:
+     * - Add additional validation (2FA, captcha)
+     * - Log login attempts
+     * - Check user status before login
+     * - Custom redirect after login
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function login(Request $request)
+    {
+        // Add pre-login checks
+        // Example: Check if user is banned
+        // $user = User::where('email', $request->email)->first();
+        // if ($user && $user->is_banned) {
+        //     return back()->withErrors(['email' => 'Your account has been suspended.']);
+        // }
+
+        return parent::login($request);
+    }
+
+    /**
+     * Log the user out.
+     *
+     * Override to customize logout behavior.
+     * Examples:
+     * - Log logout events
+     * - Clear additional session data
+     * - Custom redirect after logout
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function logout(Request $request)
+    {
+        // Add pre-logout logic
+        // Log::info('User logged out', ['user_id' => auth()->id()]);
+
+        return parent::logout($request);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Custom Methods
+    |--------------------------------------------------------------------------
+    |
+    | Add your custom authentication methods below.
+    | Examples:
+    | - showTwoFactorForm(): Show 2FA verification form
+    | - verifyTwoFactor(Request $request): Verify 2FA code
+    | - showLockScreen(): Show session lock screen
+    |
+    */
+}

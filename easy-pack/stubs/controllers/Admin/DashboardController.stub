@@ -1,0 +1,101 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use EasyPack\Http\Controllers\Manage\DashboardController as BaseDashboardController;
+use Illuminate\Support\Collection;
+
+/**
+ * Custom Dashboard Controller
+ *
+ * This controller extends the Easy Pack DashboardController to allow
+ * customization of the admin dashboard.
+ *
+ * To enable this controller:
+ * Set EASYPACK_USE_LOCAL_ADMIN_CONTROLLERS=true in .env
+ * Or add to config/easypack.php:
+ *   'local_admin_controllers' => ['dashboard' => \App\Http\Controllers\Admin\DashboardController::class]
+ */
+class DashboardController extends BaseDashboardController
+{
+    /**
+     * Show the admin dashboard.
+     *
+     * Override to customize dashboard metrics and data.
+     * Examples:
+     * - Add custom metrics (orders, revenue, etc.)
+     * - Include charts and graphs
+     * - Show recent activity
+     * - Display system health status
+     *
+     * @return \Illuminate\View\View
+     */
+    public function dashboard()
+    {
+        // Get base dashboard data
+        $response = parent::dashboard();
+
+        // Access view data
+        $data = $response->getData();
+
+        // Add custom metrics
+        $customMetrics = $this->getCustomMetrics();
+        $data['metrics'] = $data['metrics']->merge($customMetrics);
+
+        // Add custom dashboard data
+        // $data['recentOrders'] = Order::latest()->take(5)->get();
+        // $data['salesChart'] = $this->getSalesChartData();
+        // $data['topProducts'] = $this->getTopProducts();
+
+        return view('easypack::manage.dashboard.index', $data);
+
+        // Or use a custom view:
+        // return view('admin.dashboard.index', $data);
+    }
+
+    /**
+     * Get custom metrics for the dashboard.
+     *
+     * Add your own metrics here.
+     *
+     * @return Collection
+     */
+    protected function getCustomMetrics(): Collection
+    {
+        $metrics = new Collection();
+
+        // Example: Add custom metrics
+        // $metrics->push([
+        //     'title' => 'Total Revenue',
+        //     'count' => '$' . number_format(Order::sum('total'), 2),
+        //     'description' => 'This month',
+        //     'route' => 'admin.orders.index',
+        //     'icon' => 'fas fa-dollar-sign',
+        //     'color' => 'success',
+        // ]);
+        //
+        // $metrics->push([
+        //     'title' => 'Pending Orders',
+        //     'count' => Order::pending()->count(),
+        //     'description' => 'Awaiting processing',
+        //     'route' => 'admin.orders.pending',
+        //     'icon' => 'fas fa-clock',
+        //     'color' => 'warning',
+        // ]);
+
+        return $metrics;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Custom Methods
+    |--------------------------------------------------------------------------
+    |
+    | Add your custom dashboard methods below.
+    | Examples:
+    | - analytics(): Show detailed analytics
+    | - reports(): Generate reports
+    | - systemHealth(): Show system status
+    |
+    */
+}

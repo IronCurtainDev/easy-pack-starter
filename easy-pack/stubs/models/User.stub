@@ -1,0 +1,195 @@
+<?php
+
+namespace App\Models;
+
+use EasyPack\Models\User as BaseUser;
+
+/**
+ * App User Model
+ *
+ * This model extends the Easy Pack User model and allows you to
+ * customize user attributes, relationships, and behavior for your app.
+ *
+ * The base class provides:
+ * - Sanctum API tokens with device management
+ * - Spatie Media Library integration (avatar, documents)
+ * - Spatie Permission roles/permissions
+ * - Push notification preferences
+ *
+ * You can override any method or property from the base class.
+ */
+class User extends BaseUser
+{
+    /**
+     * The attributes that are mass assignable.
+     *
+     * Add your custom fields here. The base class already includes:
+     * name, email, password
+     *
+     * @var list<string>
+     */
+    protected $fillable = [
+        'name',
+        'first_name',
+        'last_name',
+        'email',
+        'password',
+        'phone',
+        'timezone',
+    ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var list<string>
+     */
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    /**
+     * The attributes that should be visible for API responses.
+     *
+     * Controls what's returned in API responses and Swagger docs.
+     *
+     * @var list<string>
+     */
+    protected $visible = [
+        'id',
+        'name',
+        'first_name',
+        'last_name',
+        'full_name',
+        'email',
+        'phone',
+        'timezone',
+        'avatar_url',
+        'avatar_thumb_url',
+        'email_verified_at',
+        'created_at',
+        'updated_at',
+    ];
+
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var list<string>
+     */
+    protected $appends = [
+        'full_name',
+        'avatar_url',
+        'avatar_thumb_url',
+    ];
+
+    /**
+     * Searchable fields for repository search functionality.
+     *
+     * @var array<string>
+     */
+    public array $searchable = [
+        'name',
+        'first_name',
+        'last_name',
+        'email',
+        'phone',
+    ];
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
+    }
+
+    /**
+     * Fields that may be added to the API responses dynamically.
+     *
+     * These fields are not stored in the database but can be set
+     * on the model instance (e.g., access_token after login).
+     *
+     * @return array<string>
+     */
+    public function getExtraApiFields(): array
+    {
+        return [
+            'access_token',
+            // Add your custom dynamic fields here
+        ];
+    }
+
+    /**
+     * Get the user's full name.
+     *
+     * @return string
+     */
+    public function getFullNameAttribute(): string
+    {
+        if ($this->first_name || $this->last_name) {
+            return trim("{$this->first_name} {$this->last_name}");
+        }
+
+        return $this->name ?? '';
+    }
+
+    /**
+     * Get the user's first name (extracted from name if not set).
+     *
+     * @return string|null
+     */
+    public function getFirstNameAttribute(): ?string
+    {
+        if (isset($this->attributes['first_name'])) {
+            return $this->attributes['first_name'];
+        }
+
+        // Extract from full name if available
+        if (isset($this->attributes['name'])) {
+            $parts = explode(' ', $this->attributes['name'], 2);
+            return $parts[0] ?? null;
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the user's last name (extracted from name if not set).
+     *
+     * @return string|null
+     */
+    public function getLastNameAttribute(): ?string
+    {
+        if (isset($this->attributes['last_name'])) {
+            return $this->attributes['last_name'];
+        }
+
+        // Extract from full name if available
+        if (isset($this->attributes['name'])) {
+            $parts = explode(' ', $this->attributes['name'], 2);
+            return $parts[1] ?? null;
+        }
+
+        return null;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Custom Methods
+    |--------------------------------------------------------------------------
+    |
+    | Add your custom user methods below. You can also override any method
+    | from the base EasyPack\Models\User class.
+    |
+    | Examples:
+    | - Custom scopes: public function scopeActive($query) { ... }
+    | - Relationships: public function posts() { return $this->hasMany(Post::class); }
+    | - Business logic: public function canAccessFeature($feature) { ... }
+    |
+    */
+}

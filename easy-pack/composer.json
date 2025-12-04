@@ -1,0 +1,66 @@
+{
+    "name": "easypack/starter",
+    "description": "Laravel Starter Kit with Authentication, Push Notifications, Media Management, and CRUD Scaffolding",
+    "keywords": ["laravel", "starter-kit", "api", "authentication", "push-notifications", "crud", "scaffolding", "easy-pack"],
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Easy Pack Team",
+            "email": "team@easypack.dev"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "illuminate/auth": "^11.0|^12.0",
+        "illuminate/console": "^11.0|^12.0",
+        "illuminate/contracts": "^11.0|^12.0",
+        "illuminate/database": "^11.0|^12.0",
+        "illuminate/http": "^11.0|^12.0",
+        "illuminate/routing": "^11.0|^12.0",
+        "illuminate/support": "^11.0|^12.0",
+        "illuminate/validation": "^11.0|^12.0",
+        "laravel/sanctum": "^4.0",
+        "spatie/laravel-medialibrary": "^10.0|^11.0",
+        "spatie/laravel-permission": "^5.0|^6.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^9.0|^10.0",
+        "phpunit/phpunit": "^10.0|^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "EasyPack\\": "src/",
+            "EasyPack\\Database\\Seeders\\": "database/seeders/"
+        },
+        "files": [
+            "src/helpers.php",
+            "src/ApiDocs/helpers.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "EasyPack\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "1.x-dev",
+            "dev-master": "1.x-dev"
+        },
+        "laravel": {
+            "providers": [
+                "EasyPack\\EasyPackServiceProvider"
+            ],
+            "aliases": {
+                "Navigator": "EasyPack\\Facades\\Navigator",
+                "Setting": "EasyPack\\Facades\\Setting"
+            }
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

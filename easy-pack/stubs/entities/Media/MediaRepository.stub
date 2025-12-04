@@ -1,0 +1,155 @@
+<?php
+
+namespace App\Entities\Media;
+
+use App\Entities\BaseRepository;
+use App\Entities\Media\Media;
+
+class MediaRepository extends BaseRepository
+{
+    public function __construct(Media $model)
+    {
+        parent::__construct($model);
+    }
+
+    /**
+     * Search media with optional filters.
+     *
+     * @param string|null $query
+     * @param string|null $collection
+     * @param string|null $fileKey
+     * @param int $perPage
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
+    public function searchMedia(
+        ?string $query = null,
+        ?string $collection = null,
+        ?string $fileKey = null,
+        int $perPage = 15
+    ) {
+        $builder = $this->model->newQuery();
+
+        if ($query) {
+            $builder->search($query);
+        }
+
+        if ($collection) {
+            $builder->inCollection($collection);
+        }
+
+        if ($fileKey) {
+            $builder->byFileKey($fileKey);
+        }
+
+        return $builder->orderBy('created_at', 'desc')->paginate($perPage);
+    }
+
+    /**
+     * Find media by UUID.
+     *
+     * @param string $uuid
+     * @param array $with
+     * @return Media|null
+     */
+    public function findByUuid($uuid, $with = []): ?Media
+    {
+        $query = $this->model->where('uuid', $uuid);
+
+        if (!empty($with)) {
+            $query->with($with);
+        }
+
+        return $query->first();
+    }
+
+    /**
+     * Find media by UUID or fail.
+     *
+     * @param string $uuid
+     * @return Media
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     */
+    public function findByUuidOrFail(string $uuid): Media
+    {
+        return $this->model->where('uuid', $uuid)->firstOrFail();
+    }
+
+    /**
+     * Find media by file key.
+     *
+     * @param string $key
+     * @return Media|null
+     */
+    public function findByFileKey(string $key): ?Media
+    {
+        return $this->model->where('custom_properties->file_key', $key)->first();
+    }
+
+    /**
+     * Get media by collection name.
+     *
+     * @param string $collection
+     * @param int $perPage
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
+    public function getByCollection(string $collection, int $perPage = 15)
+    {
+        return $this->model
+            ->where('collection_name', $collection)
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage);
+    }
+
+    /**
+     * Get all available file keys.
+     *
+     * @return array
+     */
+    public function getFileKeys(): array
+    {
+        return Media::fileKeys();
+    }
+
+    /**
+     * Get locked file keys.
+     *
+     * @return array
+     */
+    public function getLockedFileKeys(): array
+    {
+        return Media::getLockedFileKeys();
+    }
+
+    /**
+     * Update media custom properties.
+     *
+     * @param Media $media
+     * @param array $properties
+     * @return Media
+     */
+    public function updateCustomProperties(Media $media, array $properties): Media
+    {
+        foreach ($properties as $key => $value) {
+            $media->setCustomProperty($key, $value);
+        }
+        $media->save();
+
+        return $media->fresh();
+    }
+
+    /**
+     * Delete media if allowed.
+     *
+     * @param Media $media
+     * @return bool
+     * @throws \Exception
+     */
+    public function deleteMedia(Media $media): bool
+    {
+        if (!$media->isDeleteAllowed()) {
+            throw new \Exception('This media item is protected and cannot be deleted.');
+        }
+
+        return $media->forceDeleteMedia();
+    }
+}

@@ -1,0 +1,138 @@
+<?php
+
+namespace App\Models;
+
+use EasyPack\Models\Setting as BaseSetting;
+
+/**
+ * App Setting Model
+ *
+ * This model extends the Easy Pack Setting model and allows
+ * you to customize setting attributes, validation, and behavior.
+ *
+ * The base class provides:
+ * - Key-value setting storage
+ * - Data type support (json, text, string, boolean)
+ * - Relationship to setting groups
+ * - Validation rules
+ *
+ * You can override any method or property from the base class.
+ */
+class Setting extends BaseSetting
+{
+    /**
+     * Data type constants.
+     */
+    public const DATA_TYPE_JSON = 'json';
+    public const DATA_TYPE_TEXT = 'text';
+    public const DATA_TYPE_STRING = 'string';
+    public const DATA_TYPE_BOOLEAN = 'bool';
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'setting_key',
+        'setting_value',
+        'setting_data_type',
+        'description',
+        'setting_group_id',
+    ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'setting_key',
+        'setting_value',
+        'setting_data_type',
+        'description',
+        'is_key_editable',
+        'is_value_editable',
+    ];
+
+    /**
+     * The attributes appended to the model's array form.
+     *
+     * @var array<int, string>
+     */
+    protected $appends = [
+        'key',
+        'value',
+    ];
+
+    /**
+     * The attributes that should be visible for serialization.
+     *
+     * @var array<int, string>
+     */
+    protected $visible = [
+        'id',
+        'key',
+        'value',
+        'created_at',
+        'updated_at',
+    ];
+
+    /**
+     * Searchable fields for the model.
+     *
+     * @var array<string>
+     */
+    public array $searchable = [
+        'setting_key',
+        'setting_value',
+        'description',
+    ];
+
+    /**
+     * Get validation rules for creating a setting.
+     *
+     * @return array
+     */
+    public function getCreateRules(): array
+    {
+        return [
+            'setting_key' => 'required|unique:settings,setting_key',
+            // Add your custom validation rules here
+        ];
+    }
+
+    /**
+     * Get validation rules for updating a setting.
+     *
+     * @param int|null $id
+     * @return array
+     */
+    public function getUpdateRules($id = null): array
+    {
+        return [
+            'setting_key' => [
+                'required',
+                \Illuminate\Validation\Rule::unique('settings', 'setting_key')->ignore($id),
+            ],
+            // Add your custom validation rules here
+        ];
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Custom Methods
+    |--------------------------------------------------------------------------
+    |
+    | Add your custom setting methods below. You can also override any method
+    | from the base EasyPack\Models\Setting class.
+    |
+    | Available methods to override:
+    | - getKeyAttribute(): string - Returns the setting key
+    | - getValueAttribute(): mixed - Returns the setting value
+    | - getIsKeyEditableAttribute(): bool - Check if key is editable
+    | - getIsValueEditableAttribute(): bool - Check if value is editable
+    | - group() - Relationship to setting group
+    |
+    */
+}

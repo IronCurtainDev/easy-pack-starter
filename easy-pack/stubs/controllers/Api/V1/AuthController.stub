@@ -1,0 +1,137 @@
+<?php
+
+namespace App\Http\Controllers\Api\V1;
+
+use EasyPack\Http\Controllers\Api\V1\AuthController as BaseAuthController;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+/**
+ * Custom Authentication Controller
+ *
+ * This controller extends the Easy Pack AuthController to allow
+ * customization of authentication logic while retaining base functionality.
+ *
+ * Available methods to override:
+ * - register(Request $request): JsonResponse
+ * - login(Request $request): JsonResponse
+ * - logout(Request $request): JsonResponse
+ * - logoutAll(Request $request): JsonResponse
+ * - me(Request $request): JsonResponse
+ * - updatePushToken(Request $request): JsonResponse
+ * - refresh(Request $request): JsonResponse
+ * - verifyEmail(Request $request): JsonResponse
+ * - resendCode(Request $request): JsonResponse
+ *
+ * Usage:
+ * 1. Override methods you want to customize
+ * 2. Call parent::methodName($request) to use base logic
+ * 3. Add your custom logic before/after parent calls
+ *
+ * To enable this controller:
+ * Set EASYPACK_USE_LOCAL_API_CONTROLLERS=true in .env
+ * Or add to config/easypack.php:
+ *   'local_api_controllers' => ['auth' => \App\Http\Controllers\Api\V1\AuthController::class]
+ */
+class AuthController extends BaseAuthController
+{
+    /**
+     * Register a new user.
+     *
+     * Override this method to customize registration logic.
+     * Examples:
+     * - Add custom fields (first_name, last_name, phone)
+     * - Send welcome email after registration
+     * - Assign default roles/permissions
+     * - Create related models (profile, settings)
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function register(Request $request): JsonResponse
+    {
+        // Add custom validation or pre-processing here
+        // Example: $request->merge(['referral_code' => session('referral_code')]);
+
+        // Call parent registration
+        $response = parent::register($request);
+
+        // Add custom post-processing here
+        // Example: Send welcome notification, create profile, etc.
+
+        return $response;
+    }
+
+    /**
+     * Login user.
+     *
+     * Override this method to customize login logic.
+     * Examples:
+     * - Log login attempts for security
+     * - Check additional conditions (subscription status, account status)
+     * - Update last_login_at timestamp
+     * - Load additional relationships
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function login(Request $request): JsonResponse
+    {
+        // Add custom pre-login logic here
+        // Example: Log::info('Login attempt', ['email' => $request->email]);
+
+        // Call parent login
+        $response = parent::login($request);
+
+        // Add custom post-login logic here
+        // Example: Update last_login_at, log successful logins
+
+        return $response;
+    }
+
+    /**
+     * Logout from current device.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function logout(Request $request): JsonResponse
+    {
+        // Add custom logout logic if needed
+        return parent::logout($request);
+    }
+
+    /**
+     * Get current authenticated user.
+     *
+     * Override to customize what user data is returned.
+     * Examples:
+     * - Load additional relationships
+     * - Add computed properties
+     * - Include app-specific data
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function me(Request $request): JsonResponse
+    {
+        // Example: Load additional relationships
+        // $request->user()->load(['subscription', 'preferences']);
+
+        return parent::me($request);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Custom Methods
+    |--------------------------------------------------------------------------
+    |
+    | Add your custom authentication methods below.
+    | Examples:
+    | - Social login (loginWithGoogle, loginWithFacebook)
+    | - Two-factor authentication
+    | - Biometric authentication
+    | - Magic link login
+    |
+    */
+}

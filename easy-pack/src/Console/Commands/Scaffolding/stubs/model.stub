@@ -1,0 +1,71 @@
+<?php
+
+namespace {{ namespace }};
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
+class {{ class }} extends Model
+{
+    use HasFactory;
+
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = '{{tableName}}';
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'name',
+        // Add your fillable fields here
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        // Add your casts here
+    ];
+
+    /**
+     * Searchable fields for the model.
+     *
+     * @var array<string>
+     */
+    public array $searchable = [
+        'name',
+    ];
+
+    /**
+     * Get validation rules for creating a new model.
+     *
+     * @return array
+     */
+    public function getCreateRules(): array
+    {
+        return [
+            'name' => 'required|string|max:255',
+        ];
+    }
+
+    /**
+     * Get validation rules for updating the model.
+     *
+     * @param int|null $id
+     * @return array
+     */
+    public function getUpdateRules($id = null): array
+    {
+        return [
+            'name' => 'required|string|max:255',
+        ];
+    }
+}

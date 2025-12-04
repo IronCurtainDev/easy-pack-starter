@@ -1,0 +1,330 @@
+<?php
+
+namespace App\Entities\Media;
+
+use App\Models\User;
+use Spatie\MediaLibrary\MediaCollections\Models\Media as BaseMedia;
+
+/**
+ * Media Model
+ *
+ * Extended Spatie Media model with additional functionality.
+ * Provides file keys, permalinks, searchable fields, and delete protection.
+ */
+class Media extends BaseMedia
+{
+    /**
+     * Searchable fields for this model.
+     *
+     * @var array
+     */
+    protected array $searchable = [
+        'name',
+        'file_name',
+        'collection_name',
+    ];
+
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = [
+        // 'permalink', // Uncomment if you want it to be available with the response
+    ];
+
+    /**
+     * The attributes that should be visible in serialization.
+     *
+     * @var array
+     */
+    protected $visible = [
+        'id',
+        'uuid',
+        'name',
+        'file_name',
+        'mime_type',
+        'size',
+        'collection_name',
+        'custom_properties',
+        'url',
+        'permalink',
+    ];
+
+    /**
+     * Pre-defined file keys that are locked from deletion.
+     *
+     * @return array
+     */
+    public static function getLockedFileKeys(): array
+    {
+        return [
+            'privacy-policy',
+            'terms-conditions',
+        ];
+    }
+
+    /**
+     * Pre-defined file keys with their display names.
+     *
+     * @param string|null $key
+     * @return array|string
+     */
+    public static function fileKeys(?string $key = null): array|string
+    {
+        $keys = [
+            'privacy-policy' => 'Privacy Policy',
+            'terms-conditions' => 'Terms & Conditions',
+            'about-us' => 'About Us',
+            'other' => 'Other',
+        ];
+
+        if ($key && isset($keys[$key])) {
+            return $keys[$key];
+        }
+
+        return $keys;
+    }
+
+    /**
+     * Get the file key from custom properties.
+     *
+     * @return string|null
+     */
+    public function getFileKeyAttribute(): ?string
+    {
+        return $this->getCustomProperty('file_key');
+    }
+
+    /**
+     * Set the file key in custom properties.
+     *
+     * @param string $value
+     * @return void
+     */
+    public function setFileKeyAttribute(string $value): void
+    {
+        $this->setCustomProperty('file_key', $value);
+    }
+
+    /**
+     * Check if the media item can be deleted.
+     *
+     * @return bool
+     */
+    public function isDeleteAllowed(): bool
+    {
+        $fileKey = $this->getCustomProperty('file_key');
+
+        if ($fileKey && in_array($fileKey, self::getLockedFileKeys())) {
+            return false;
+        }
+
+        // Also check collection name for locked keys
+        if (in_array($this->collection_name, self::getLockedFileKeys())) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Get the permalink for the media.
+     *
+     * @return string
+     */
+    public function getPermalinkAttribute(): string
+    {
+        return route('media.show', [
+            'uuid' => $this->uuid,
+            'fileName' => $this->file_name,
+        ]);
+    }
+
+    /**
+     * Get the public URL attribute.
+     *
+     * @return string|null
+     */
+    public function getPublicUrlAttribute(): ?string
+    {
+        if ($this->disk === 'public') {
+            return asset('storage/' . $this->getPathRelativeToRoot());
+        }
+
+        return $this->getUrl();
+    }
+
+    /**
+     * Get the URL attribute for easy access.
+     *
+     * @return string
+     */
+    public function getUrlAttribute(): string
+    {
+        return $this->getUrl();
+    }
+
+    /**
+     * Get searchable fields for this model.
+     *
+     * @return array
+     */
+    public function getSearchableFields(): array
+    {
+        return $this->searchable;
+    }
+
+    /**
+     * Scope to search media by searchable fields.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string $search
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeSearch($query, string $search)
+    {
+        return $query->where(function ($q) use ($search) {
+            foreach ($this->searchable as $field) {
+                $q->orWhere($field, 'LIKE', "%{$search}%");
+            }
+        });
+    }
+
+    /**
+     * Scope to filter by file key.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string $key
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByFileKey($query, string $key)
+    {
+        return $query->where('custom_properties->file_key', $key);
+    }
+
+    /**
+     * Scope to filter by collection name.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string $collection
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeInCollection($query, string $collection)
+    {
+        return $query->where('collection_name', $collection);
+    }
+
+    /**
+     * Get the uploaded by user.
+     *
+     * @return \App\Models\User|null
+     */
+    public function uploadedBy(): ?User
+    {
+        $userId = $this->getCustomProperty('uploaded_by_user_id');
+
+        if ($userId) {
+            return User::find($userId);
+        }
+
+        return null;
+    }
+
+    /**
+     * Set the uploader user ID.
+     *
+     * @param int $userId
+     * @return self
+     */
+    public function setUploadedBy(int $userId): self
+    {
+        $this->setCustomProperty('uploaded_by_user_id', $userId);
+        $this->save();
+
+        return $this;
+    }
+
+    /**
+     * Get media item formatted for API response.
+     *
+     * @return array
+     */
+    public function toApiResponse(): array
+    {
+        $conversions = [];
+
+        foreach ($this->getGeneratedConversions() as $conversionName => $generated) {
+            if ($generated) {
+                $conversions[$conversionName] = $this->getUrl($conversionName);
+            }
+        }
+
+        return [
+            'id' => $this->id,
+            'uuid' => $this->uuid,
+            'name' => $this->name,
+            'file_name' => $this->file_name,
+            'original_filename' => $this->file_name,
+            'mime_type' => $this->mime_type,
+            'size' => $this->size,
+            'human_readable_size' => $this->human_readable_size,
+            'collection_name' => $this->collection_name,
+            'file_key' => $this->file_key,
+            'url' => $this->getUrl(),
+            'public_url' => $this->public_url,
+            'permalink' => $this->permalink,
+            'conversions' => $conversions,
+            'custom_properties' => $this->custom_properties,
+            'created_at' => $this->created_at?->toISOString(),
+            'updated_at' => $this->updated_at?->toISOString(),
+        ];
+    }
+
+    /**
+     * Find media by file key.
+     *
+     * @param string $key
+     * @return static|null
+     */
+    public static function findByFileKey(string $key): ?self
+    {
+        return static::where('custom_properties->file_key', $key)->first();
+    }
+
+    /**
+     * Find media by UUID.
+     *
+     * @param string $uuid
+     * @return static|null
+     */
+    public static function findByUuid(string $uuid): ?self
+    {
+        return static::where('uuid', $uuid)->first();
+    }
+
+    /**
+     * Override delete to check if deletion is allowed.
+     *
+     * @return bool|null
+     * @throws \Exception
+     */
+    public function delete()
+    {
+        if (!$this->isDeleteAllowed()) {
+            throw new \Exception("This media item cannot be deleted as it is protected.");
+        }
+
+        return parent::delete();
+    }
+
+    /**
+     * Force delete without checking protection.
+     *
+     * @return bool|null
+     */
+    public function forceDeleteMedia()
+    {
+        return parent::delete();
+    }
+}

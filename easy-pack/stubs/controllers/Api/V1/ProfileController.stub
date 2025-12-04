@@ -1,0 +1,151 @@
+<?php
+
+namespace App\Http\Controllers\Api\V1;
+
+use EasyPack\Http\Controllers\Api\V1\ProfileController as BaseProfileController;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+/**
+ * Custom Profile Controller
+ *
+ * This controller extends the Easy Pack ProfileController to allow
+ * customization of profile management logic.
+ *
+ * Available methods to override:
+ * - show(Request $request): JsonResponse
+ * - update(Request $request): JsonResponse
+ * - updatePassword(Request $request): JsonResponse
+ * - updateAvatar(Request $request): JsonResponse
+ * - deleteAvatar(Request $request): JsonResponse
+ * - devices(Request $request): JsonResponse
+ * - logoutDevice(Request $request, string $deviceId): JsonResponse
+ * - notificationPreferences(Request $request): JsonResponse
+ * - updateNotificationPreferences(Request $request): JsonResponse
+ * - destroy(Request $request): JsonResponse
+ *
+ * To enable this controller:
+ * Set EASYPACK_USE_LOCAL_API_CONTROLLERS=true in .env
+ * Or add to config/easypack.php:
+ *   'local_api_controllers' => ['profile' => \App\Http\Controllers\Api\V1\ProfileController::class]
+ */
+class ProfileController extends BaseProfileController
+{
+    /**
+     * Get the authenticated user's profile.
+     *
+     * Override to customize profile data returned.
+     * Examples:
+     * - Load additional relationships
+     * - Include subscription status
+     * - Add computed stats (posts count, followers, etc.)
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function show(Request $request): JsonResponse
+    {
+        // Example: Load additional relationships
+        // $request->user()->load(['subscription', 'stats']);
+
+        return parent::show($request);
+    }
+
+    /**
+     * Update the authenticated user's profile.
+     *
+     * Override to add custom fields or validation.
+     * Examples:
+     * - Add first_name, last_name, phone, bio fields
+     * - Custom validation rules
+     * - Update related models
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function update(Request $request): JsonResponse
+    {
+        // Example: Add custom validation for additional fields
+        // $request->validate([
+        //     'first_name' => 'sometimes|string|max:100',
+        //     'last_name' => 'sometimes|string|max:100',
+        //     'phone' => 'sometimes|string|max:20',
+        //     'bio' => 'sometimes|string|max:500',
+        // ]);
+
+        return parent::update($request);
+    }
+
+    /**
+     * Update the authenticated user's password.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function updatePassword(Request $request): JsonResponse
+    {
+        // Add custom logic if needed (e.g., notify user of password change)
+        $response = parent::updatePassword($request);
+
+        // Example: Send notification about password change
+        // if (json_decode($response->getContent())->result) {
+        //     $request->user()->notify(new PasswordChangedNotification());
+        // }
+
+        return $response;
+    }
+
+    /**
+     * Update the authenticated user's avatar.
+     *
+     * Override to customize avatar handling.
+     * Examples:
+     * - Different image sizes
+     * - Custom storage path
+     * - Image optimization
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function updateAvatar(Request $request): JsonResponse
+    {
+        return parent::updateAvatar($request);
+    }
+
+    /**
+     * Delete account.
+     *
+     * Override to add custom cleanup logic.
+     * Examples:
+     * - Archive user data before deletion
+     * - Cancel subscriptions
+     * - Send farewell email
+     * - Clean up related records
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function destroy(Request $request): JsonResponse
+    {
+        // Example: Add custom cleanup before deletion
+        // $user = $request->user();
+        // $user->subscription?->cancel();
+        // $user->posts()->delete();
+
+        return parent::destroy($request);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Custom Methods
+    |--------------------------------------------------------------------------
+    |
+    | Add your custom profile methods below.
+    | Examples:
+    | - updateBio(Request $request)
+    | - updateSocialLinks(Request $request)
+    | - exportData(Request $request)
+    | - getActivityHistory(Request $request)
+    |
+    */
+}

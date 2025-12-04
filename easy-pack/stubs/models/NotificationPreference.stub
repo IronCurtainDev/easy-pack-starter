@@ -1,0 +1,88 @@
+<?php
+
+namespace App\Models;
+
+use EasyPack\Models\NotificationPreference as BaseNotificationPreference;
+
+/**
+ * App Notification Preference Model
+ *
+ * This model extends the Easy Pack NotificationPreference model and
+ * allows you to customize user notification preferences.
+ *
+ * The base class provides:
+ * - Push/Email/SMS notification toggles
+ * - Quiet hours management
+ * - Category-based preferences
+ * - User relationship
+ *
+ * You can override any method or property from the base class.
+ */
+class NotificationPreference extends BaseNotificationPreference
+{
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'user_id',
+        'push_enabled',
+        'email_enabled',
+        'sms_enabled',
+        'quiet_hours_enabled',
+        'quiet_hours_start',
+        'quiet_hours_end',
+        'categories',
+    ];
+
+    /**
+     * The attributes that should be visible for serialization.
+     *
+     * @var array<int, string>
+     */
+    protected $visible = [
+        'id',
+        'user_id',
+        'push_enabled',
+        'email_enabled',
+        'sms_enabled',
+        'quiet_hours_enabled',
+        'quiet_hours_start',
+        'quiet_hours_end',
+        'categories',
+        'created_at',
+        'updated_at',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'push_enabled' => 'boolean',
+        'email_enabled' => 'boolean',
+        'sms_enabled' => 'boolean',
+        'quiet_hours_enabled' => 'boolean',
+        'categories' => 'array',
+    ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | Custom Methods
+    |--------------------------------------------------------------------------
+    |
+    | Add your custom notification preference methods below. You can also
+    | override any method from the base class.
+    |
+    | Available methods to override:
+    | - user() - Relationship to the user
+    | - forUser($user): self - Get or create preferences for a user
+    | - isCategoryEnabled($category): bool - Check if category is enabled
+    | - enableCategory($category): bool - Enable a category
+    | - disableCategory($category): bool - Disable a category
+    | - isInQuietHours(): bool - Check if currently in quiet hours
+    |
+    */
+}

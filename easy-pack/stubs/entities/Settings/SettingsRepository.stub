@@ -1,0 +1,130 @@
+<?php
+
+namespace App\Entities\Settings;
+
+use App\Entities\BaseRepository;
+use App\Models\Setting;
+
+class SettingsRepository extends BaseRepository
+{
+    public function __construct(Setting $model)
+    {
+        parent::__construct($model);
+    }
+
+    /**
+     * Find a setting by key.
+     *
+     * @param string $key
+     * @return Setting|null
+     */
+    public function findByKey(string $key): ?Setting
+    {
+        return $this->model->where('setting_key', $key)->first();
+    }
+
+    /**
+     * Get a setting value by key with optional default.
+     *
+     * @param string $key
+     * @param mixed $default
+     * @return mixed
+     */
+    public function getValue(string $key, mixed $default = null): mixed
+    {
+        $setting = $this->findByKey($key);
+        
+        return $setting ? $setting->setting_value : $default;
+    }
+
+    /**
+     * Set a setting value by key.
+     *
+     * @param string $key
+     * @param mixed $value
+     * @param int|null $groupId
+     * @return Setting
+     */
+    public function setValue(string $key, mixed $value, ?int $groupId = null): Setting
+    {
+        $setting = $this->findByKey($key);
+
+        if ($setting) {
+            $setting->update(['setting_value' => $value]);
+            return $setting->fresh();
+        }
+
+        return $this->model->create([
+            'setting_key' => $key,
+            'setting_value' => $value,
+            'setting_group_id' => $groupId,
+        ]);
+    }
+
+    /**
+     * Get all settings for a specific group.
+     *
+     * @param int $groupId
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getByGroup(int $groupId)
+    {
+        return $this->model
+            ->where('setting_group_id', $groupId)
+            ->orderBy('setting_key')
+            ->get();
+    }
+
+    /**
+     * Delete a setting by key.
+     *
+     * @param string $key
+     * @return bool
+     */
+    public function deleteByKey(string $key): bool
+    {
+        return $this->model->where('setting_key', $key)->delete() > 0;
+    }
+
+    /**
+     * Get all settings as key-value array.
+     *
+     * @return array
+     */
+    public function getAllAsArray(): array
+    {
+        return $this->model
+            ->pluck('setting_value', 'setting_key')
+            ->toArray();
+    }
+
+    /**
+     * Check if a setting key exists.
+     *
+     * @param string $key
+     * @return bool
+     */
+    public function exists(string $key): bool
+    {
+        return $this->model->where('setting_key', $key)->exists();
+    }
+
+    /**
+     * Bulk update settings.
+     *
+     * @param array $settings Array of ['key' => 'value'] pairs
+     * @param int|null $groupId
+     * @return int Number of settings updated/created
+     */
+    public function bulkUpdate(array $settings, ?int $groupId = null): int
+    {
+        $count = 0;
+
+        foreach ($settings as $key => $value) {
+            $this->setValue($key, $value, $groupId);
+            $count++;
+        }
+
+        return $count;
+    }
+}

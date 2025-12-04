@@ -1,0 +1,103 @@
+<?php
+
+namespace {{ namespace }};
+
+use App\Http\Controllers\Controller;
+use App\Entities\{{entityGroup}}\{{entitySingular}};
+use App\Entities\{{entityGroup}}\{{entityGroup}}Repository;
+use Illuminate\Http\Request;
+
+class {{ class }} extends Controller
+{
+    public function __construct(
+        protected {{entityGroup}}Repository $repository
+    ) {}
+
+    /**
+     * Display a listing of {{entityGroupLower}}.
+     */
+    public function index(Request $request)
+    {
+        $perPage = $request->get('per_page', 20);
+        $search = $request->get('search');
+
+        $items = $this->repository->paginateWithSearch($search, $perPage);
+
+        return view('manage.{{resourceName}}.index', [
+            '{{entityGroupLower}}' => $items,
+            'pageTitle' => '{{entityGroup}}',
+        ]);
+    }
+
+    /**
+     * Show the form for creating a new {{entityLower}}.
+     */
+    public function create()
+    {
+        return view('manage.{{resourceName}}.create', [
+            'pageTitle' => 'Create {{entitySingular}}',
+        ]);
+    }
+
+    /**
+     * Store a newly created {{entityLower}}.
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate($this->repository->getCreateRules());
+
+        $item = $this->repository->create($validated);
+
+        return redirect()
+            ->route('manage.{{resourceName}}.index')
+            ->with('success', '{{entitySingular}} created successfully.');
+    }
+
+    /**
+     * Display the specified {{entityLower}}.
+     */
+    public function show({{entitySingular}} ${{entityLower}})
+    {
+        return view('manage.{{resourceName}}.show', [
+            '{{entityLower}}' => ${{entityLower}},
+            'pageTitle' => '{{entitySingular}} Details',
+        ]);
+    }
+
+    /**
+     * Show the form for editing the specified {{entityLower}}.
+     */
+    public function edit({{entitySingular}} ${{entityLower}})
+    {
+        return view('manage.{{resourceName}}.edit', [
+            '{{entityLower}}' => ${{entityLower}},
+            'pageTitle' => 'Edit {{entitySingular}}',
+        ]);
+    }
+
+    /**
+     * Update the specified {{entityLower}}.
+     */
+    public function update(Request $request, {{entitySingular}} ${{entityLower}})
+    {
+        $validated = $request->validate($this->repository->getUpdateRules(${{entityLower}}->id));
+
+        $this->repository->update(${{entityLower}}->id, $validated);
+
+        return redirect()
+            ->route('manage.{{resourceName}}.index')
+            ->with('success', '{{entitySingular}} updated successfully.');
+    }
+
+    /**
+     * Remove the specified {{entityLower}}.
+     */
+    public function destroy({{entitySingular}} ${{entityLower}})
+    {
+        $this->repository->delete(${{entityLower}}->id);
+
+        return redirect()
+            ->route('manage.{{resourceName}}.index')
+            ->with('success', '{{entitySingular}} deleted successfully.');
+    }
+}

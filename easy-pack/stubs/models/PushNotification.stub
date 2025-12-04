@@ -1,0 +1,116 @@
+<?php
+
+namespace App\Models;
+
+use EasyPack\Models\PushNotification as BasePushNotification;
+
+/**
+ * App Push Notification Model
+ *
+ * This model extends the Easy Pack PushNotification model and allows
+ * you to customize notification attributes and behavior.
+ *
+ * The base class provides:
+ * - Notification status management (pending, sent, failed)
+ * - Scheduling support
+ * - Topic-based notifications
+ * - Category and priority support
+ *
+ * You can override any method or property from the base class.
+ */
+class PushNotification extends BasePushNotification
+{
+    /**
+     * Status constants.
+     */
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_SENT = 'sent';
+    public const STATUS_FAILED = 'failed';
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'title',
+        'message',
+        'data',
+        'topic',
+        'tokens',
+        'status',
+        'scheduled_at',
+        'sent_at',
+        'category',
+        'priority',
+    ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'tokens',
+    ];
+
+    /**
+     * The attributes that should be visible for serialization.
+     *
+     * @var array<int, string>
+     */
+    protected $visible = [
+        'id',
+        'title',
+        'message',
+        'data',
+        'topic',
+        'status',
+        'category',
+        'priority',
+        'scheduled_at',
+        'sent_at',
+        'created_at',
+        'updated_at',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'data' => 'array',
+        'tokens' => 'array',
+        'scheduled_at' => 'datetime',
+        'sent_at' => 'datetime',
+    ];
+
+    /**
+     * Searchable fields for the model.
+     *
+     * @var array<string>
+     */
+    public array $searchable = [
+        'title',
+        'message',
+    ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | Custom Methods
+    |--------------------------------------------------------------------------
+    |
+    | Add your custom push notification methods below. You can also override
+    | any method from the base EasyPack\Models\PushNotification class.
+    |
+    | Available methods to override:
+    | - scopePending($query) - Scope for pending notifications
+    | - scopeSent($query) - Scope for sent notifications
+    | - scopeFailed($query) - Scope for failed notifications
+    | - scopeReadyToSend($query) - Scope for notifications ready to be sent
+    | - markAsSent(): bool - Mark notification as sent
+    | - markAsFailed(): bool - Mark notification as failed
+    |
+    */
+}

@@ -1,0 +1,144 @@
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use EasyPack\Http\Controllers\Auth\ProfileController as BaseProfileController;
+use Illuminate\Http\Request;
+
+/**
+ * Custom Web Profile Controller
+ *
+ * This controller extends the Easy Pack ProfileController to allow
+ * customization of web-based profile management.
+ *
+ * Note: This is for WEB routes (admin panel profile).
+ * For API profile endpoints, see App\Http\Controllers\Api\ProfileController.
+ *
+ * Available methods to override:
+ * - show() - Show profile page
+ * - edit() - Show edit profile form
+ * - update(Request $request) - Update profile
+ * - editPassword() - Show password change form
+ * - updatePassword(Request $request) - Change password
+ *
+ * To enable this controller, update routes/web.php to use this controller
+ * instead of the package controller.
+ */
+class ProfileController extends BaseProfileController
+{
+    /**
+     * Show the user's profile.
+     *
+     * Override to customize profile page.
+     * Examples:
+     * - Add additional user data
+     * - Include activity history
+     * - Show user statistics
+     *
+     * @return \Illuminate\View\View
+     */
+    public function show()
+    {
+        // Add custom data to view
+        // return view('auth.profile', [
+        //     'user' => auth()->user(),
+        //     'recentActivity' => auth()->user()->activities()->latest()->take(10)->get(),
+        //     'stats' => $this->getUserStats(),
+        // ]);
+
+        return parent::show();
+    }
+
+    /**
+     * Show the profile edit form.
+     *
+     * Override to customize edit form.
+     * Examples:
+     * - Add additional fields
+     * - Include timezone options
+     * - Show avatar upload preview
+     *
+     * @return \Illuminate\View\View
+     */
+    public function edit()
+    {
+        return parent::edit();
+    }
+
+    /**
+     * Update the user's profile.
+     *
+     * Override to handle additional fields.
+     * Examples:
+     * - Handle avatar upload
+     * - Update additional profile fields
+     * - Sync with external services
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function update(Request $request)
+    {
+        // Add custom validation for additional fields
+        // $request->validate([
+        //     'first_name' => 'required|string|max:100',
+        //     'last_name' => 'required|string|max:100',
+        //     'phone' => 'nullable|string|max:20',
+        //     'timezone' => 'nullable|string|timezone',
+        // ]);
+
+        // Handle avatar upload
+        // if ($request->hasFile('avatar')) {
+        //     auth()->user()->replaceMediaFile($request->file('avatar'), 'avatar');
+        // }
+
+        return parent::update($request);
+    }
+
+    /**
+     * Show the password change form.
+     *
+     * @return \Illuminate\View\View
+     */
+    public function editPassword()
+    {
+        return parent::editPassword();
+    }
+
+    /**
+     * Update the user's password.
+     *
+     * Override to add custom behavior.
+     * Examples:
+     * - Send notification on password change
+     * - Log password changes
+     * - Invalidate other sessions
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function updatePassword(Request $request)
+    {
+        $response = parent::updatePassword($request);
+
+        // Add post-password-change logic
+        // auth()->user()->notify(new PasswordChangedNotification());
+        // Log::info('Password changed', ['user_id' => auth()->id()]);
+
+        return $response;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Custom Methods
+    |--------------------------------------------------------------------------
+    |
+    | Add your custom profile methods below.
+    | Examples:
+    | - showSecurity(): Show security settings page
+    | - enableTwoFactor(): Enable 2FA
+    | - showSessions(): Show active sessions
+    | - terminateSession($sessionId): End a specific session
+    |
+    */
+}

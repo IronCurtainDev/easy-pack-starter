@@ -1,0 +1,338 @@
+<?php
+
+namespace App\Entities;
+
+use EasyPack\Entities\BaseRepository as OxygenBaseRepository;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+
+/**
+ * Base Repository
+ *
+ * This repository extends the Easy Pack BaseRepository and provides
+ * additional functionality for file uploads and common operations.
+ *
+ * All your entity repositories should extend this class to inherit
+ * file upload handling and other common repository methods.
+ *
+ * Usage:
+ *   class PostsRepository extends BaseRepository
+ *   {
+ *       protected function getModelClass(): string
+ *       {
+ *           return Post::class;
+ *       }
+ *   }
+ */
+abstract class BaseRepository extends OxygenBaseRepository
+{
+    /**
+     * Hook called before saving the model.
+     * Override in child repositories for custom pre-save logic.
+     *
+     * @param Request $request
+     * @param Model $entity
+     * @return void
+     */
+    protected function beforeSavingModel(Request $request, Model $entity): void
+    {
+        $this->uploadFilesFromRequest($request, $entity);
+    }
+
+    /**
+     * Hook called after saving the model.
+     * Override in child repositories for custom post-save logic.
+     *
+     * @param Request $request
+     * @param Model $entity
+     * @return void
+     */
+    protected function afterSavingModel(Request $request, Model $entity): void
+    {
+        // Override in child repositories if needed
+    }
+
+    /**
+     * Create a new record with file upload support.
+     *
+     * @param array $attributes
+     * @param Request|null $request
+     * @return Model
+     */
+    public function createWithFiles(array $attributes, ?Request $request = null): Model
+    {
+        $model = $this->getModel()->newInstance($attributes);
+
+        if ($request) {
+            $this->beforeSavingModel($request, $model);
+        }
+
+        $model->save();
+
+        if ($request) {
+            $this->afterSavingModel($request, $model);
+        }
+
+        return $model;
+    }
+
+    /**
+     * Update a record with file upload support.
+     *
+     * @param int|string $id
+     * @param array $attributes
+     * @param Request|null $request
+     * @return Model
+     */
+    public function updateWithFiles(int|string $id, array $attributes, ?Request $request = null): Model
+    {
+        $model = $this->findOrFail($id);
+        $model->fill($attributes);
+
+        if ($request) {
+            $this->beforeSavingModel($request, $model);
+        }
+
+        $model->save();
+
+        if ($request) {
+            $this->afterSavingModel($request, $model);
+        }
+
+        return $model;
+    }
+
+    /**
+     * Upload files from request based on model's editable fields.
+     *
+     * This method checks if the model has getEditableFields() method and
+     * automatically handles file uploads for fields marked as 'file' type.
+     *
+     * @param Request $request
+     * @param Model $model
+     * @return void
+     */
+    protected function uploadFilesFromRequest(Request $request, Model &$model): void
+    {
+        if (!method_exists($model, 'getEditableFields')) {
+            return;
+        }
+
+        $editableFields = $model->getEditableFields();
+
+        // Get file fields
+        $fileFields = array_filter($editableFields, function ($item) {
+            return isset($item['type']) && $item['type'] === 'file';
+        });
+
+        foreach ($fileFields as $fileField) {
+            $this->processFileField($request, $model, $fileField);
+        }
+    }
+
+    /**
+     * Process a single file field.
+     *
+     * @param Request $request
+     * @param Model $model
+     * @param array $fileField
+     * @return void
+     */
+    protected function processFileField(Request $request, Model &$model, array $fileField): void
+    {
+        $fieldName = $fileField['name'];
+        $options = $fileField['options'] ?? [];
+
+        // Check if disk is configured
+        if (empty($options['disk'])) {
+            return;
+        }
+
+        // Handle file upload
+        if ($request->hasFile($fieldName)) {
+            $this->uploadFile($request->file($fieldName), $model, $options);
+            return;
+        }
+
+        // Handle file deletion
+        if ($request->has($fieldName . '_delete_file')) {
+            $this->deleteFile($model, $options);
+        }
+    }
+
+    /**
+     * Upload a file and update model attributes.
+     *
+     * @param UploadedFile $file
+     * @param Model $model
+     * @param array $options
+     * @return void
+     */
+    protected function uploadFile(UploadedFile $file, Model &$model, array $options): void
+    {
+        $disk = $options['disk'];
+        $folder = $options['folder'] ?? '';
+        $prefix = $options['use_db_prefix'] ?? '';
+
+        // Generate storage path
+        $dateFolder = now()->format('Ym');
+        $storagePath = trim("{$folder}/{$dateFolder}", '/');
+
+        // Store the file
+        $path = $file->store($storagePath, $disk);
+
+        if (!$path) {
+            throw new \RuntimeException('File upload failed');
+        }
+
+        // Update model attributes
+        $model->{$this->prefix($prefix, 'name')} = $file->getClientOriginalName();
+        $model->{$this->prefix($prefix, 'original_filename')} = $file->getClientOriginalName();
+        $model->{$this->prefix($prefix, 'file_path')} = $path;
+        $model->{$this->prefix($prefix, 'file_disk')} = $disk;
+        $model->{$this->prefix($prefix, 'file_url')} = Storage::disk($disk)->url($path);
+        $model->{$this->prefix($prefix, 'file_size_bytes')} = $file->getSize();
+        $model->{$this->prefix($prefix, 'uploaded_by_user_id')} = auth()->id();
+
+        // Handle thumbnail generation if enabled
+        if (!empty($options['thumb_path_column']) && $this->isImage($file)) {
+            $thumbPath = $this->generateThumbnail($file, $storagePath, $disk);
+            if ($thumbPath) {
+                $model->{$options['thumb_path_column']} = $thumbPath;
+            }
+        }
+    }
+
+    /**
+     * Delete file from storage and clear model attributes.
+     *
+     * @param Model $model
+     * @param array $options
+     * @return void
+     */
+    protected function deleteFile(Model &$model, array $options): void
+    {
+        $prefix = $options['use_db_prefix'] ?? '';
+
+        // Delete file from disk if configured
+        if (!empty($options['delete_from_disk'])) {
+            $disk = $model->{$this->prefix($prefix, 'file_disk')};
+            $filePath = $model->{$this->prefix($prefix, 'file_path')};
+
+            if ($disk && $filePath) {
+                $storageDisk = Storage::disk($disk);
+                if ($storageDisk->exists($filePath)) {
+                    $storageDisk->delete($filePath);
+                }
+            }
+
+            // Delete thumbnail if exists
+            if (!empty($options['thumb_path_column'])) {
+                $thumbPath = $model->{$options['thumb_path_column']};
+                if ($thumbPath && $storageDisk->exists($thumbPath)) {
+                    $storageDisk->delete($thumbPath);
+                }
+            }
+        }
+
+        // Clear model attributes
+        $model->{$this->prefix($prefix, 'name')} = null;
+        $model->{$this->prefix($prefix, 'original_filename')} = null;
+        $model->{$this->prefix($prefix, 'file_path')} = null;
+        $model->{$this->prefix($prefix, 'file_disk')} = null;
+        $model->{$this->prefix($prefix, 'file_url')} = null;
+        $model->{$this->prefix($prefix, 'file_size_bytes')} = null;
+        $model->{$this->prefix($prefix, 'uploaded_by_user_id')} = null;
+
+        if (!empty($options['thumb_path_column'])) {
+            $model->{$options['thumb_path_column']} = null;
+        }
+    }
+
+    /**
+     * Generate a thumbnail for an image file.
+     *
+     * @param UploadedFile $file
+     * @param string $storagePath
+     * @param string $disk
+     * @return string|null
+     */
+    protected function generateThumbnail(UploadedFile $file, string $storagePath, string $disk): ?string
+    {
+        // Basic implementation - override for custom thumbnail generation
+        // For advanced thumbnails, consider using Intervention Image or Spatie Image
+        return null;
+    }
+
+    /**
+     * Check if file is an image.
+     *
+     * @param UploadedFile $file
+     * @return bool
+     */
+    protected function isImage(UploadedFile $file): bool
+    {
+        return str_starts_with($file->getMimeType(), 'image/');
+    }
+
+    /**
+     * Prefix a field name.
+     *
+     * @param string|bool|null $prefix
+     * @param string $name
+     * @return string
+     */
+    protected function prefix(string|bool|null $prefix, string $name): string
+    {
+        if ($prefix && $prefix !== true) {
+            return $prefix . '_' . $name;
+        }
+
+        return $name;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Query Helpers
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Get active records (not deleted/disabled).
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getActive()
+    {
+        return $this->query(function (Builder $query) {
+            if (method_exists($this->model, 'scopeActive')) {
+                $query->active();
+            }
+        })->all();
+    }
+
+    /**
+     * Search and paginate with custom filters.
+     *
+     * @param Request $request
+     * @param array $additionalFilters
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
+    public function searchAndPaginate(Request $request, array $additionalFilters = [])
+    {
+        $perPage = $request->get('per_page', 15);
+        $search = $request->get('search') ?? $request->get('q');
+        $sortBy = $request->get('sort_by', 'created_at');
+        $sortDirection = $request->get('sort_direction', 'desc');
+
+        // Apply additional filters
+        foreach ($additionalFilters as $field => $value) {
+            $this->where($field, $value);
+        }
+
+        return $this->paginateWithSearch($search, $perPage, $sortBy, $sortDirection);
+    }
+}

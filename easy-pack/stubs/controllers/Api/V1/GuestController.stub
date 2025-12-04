@@ -1,0 +1,105 @@
+<?php
+
+namespace App\Http\Controllers\Api\V1;
+
+use EasyPack\Http\Controllers\Api\V1\GuestController as BaseGuestController;
+use Illuminate\Http\JsonResponse;
+
+/**
+ * Custom Guest Controller
+ *
+ * This controller extends the Easy Pack GuestController to allow
+ * customization of public/guest endpoint logic.
+ *
+ * The guest endpoint returns public app settings that don't require
+ * authentication, useful for app initialization before login.
+ *
+ * To enable this controller:
+ * Set EASYPACK_USE_LOCAL_API_CONTROLLERS=true in .env
+ * Or add to config/easypack.php:
+ *   'local_api_controllers' => ['guest' => \App\Http\Controllers\Api\V1\GuestController::class]
+ */
+class GuestController extends BaseGuestController
+{
+    /**
+     * Get guest/public settings.
+     *
+     * Override to customize public app settings.
+     * Common additions:
+     * - App version requirements
+     * - Feature flags for guests
+     * - Public announcements
+     * - Social media links
+     * - Contact information
+     * - FAQs URL
+     *
+     * @return JsonResponse
+     */
+    public function index(): JsonResponse
+    {
+        // Get base guest data from parent
+        $response = parent::index();
+        $data = json_decode($response->getContent(), true);
+
+        // Add custom public settings
+        $customData = [
+            // App version info
+            'min_app_version' => config('app.min_version', '1.0.0'),
+            'current_app_version' => config('app.version', '1.0.0'),
+            'force_update' => config('app.force_update', false),
+
+            // Feature flags for guests
+            'features' => [
+                'registration_enabled' => has_feature('auth.public_users_can_register', true),
+                'social_login_enabled' => has_feature('auth.social_login', false),
+                'guest_checkout_enabled' => has_feature('checkout.guest_checkout', false),
+            ],
+
+            // Contact & Support
+            'support_email' => config('app.support_email'),
+            'support_phone' => config('app.support_phone'),
+
+            // Social links
+            'social_links' => [
+                'facebook' => config('app.social.facebook'),
+                'twitter' => config('app.social.twitter'),
+                'instagram' => config('app.social.instagram'),
+            ],
+        ];
+
+        // Merge custom data with base data
+        $data['payload'] = array_merge($data['payload'] ?? [], $customData);
+
+        return response()->json($data);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Custom Methods
+    |--------------------------------------------------------------------------
+    |
+    | Add your custom public/guest methods below.
+    | Examples:
+    | - getAppConfig(): App configuration for mobile apps
+    | - getAnnouncements(): Public announcements
+    | - checkMaintenance(): Maintenance mode status
+    | - getPublicContent(): Public content/articles
+    |
+    */
+
+    /**
+     * Get public announcements.
+     *
+     * Example custom method for public announcements.
+     *
+     * @return JsonResponse
+     */
+    // public function announcements(): JsonResponse
+    // {
+    //     $announcements = cache()->remember('public_announcements', 3600, function () {
+    //         return Announcement::active()->public()->latest()->get();
+    //     });
+    //
+    //     return response()->apiSuccess($announcements);
+    // }
+}

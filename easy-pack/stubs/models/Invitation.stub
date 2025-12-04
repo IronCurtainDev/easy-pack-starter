@@ -1,0 +1,85 @@
+<?php
+
+namespace App\Models;
+
+use EasyPack\Models\Invitation as BaseInvitation;
+
+/**
+ * App Invitation Model
+ *
+ * This model extends the Easy Pack Invitation model and allows
+ * you to customize invitation attributes and behavior.
+ *
+ * The base class provides:
+ * - Invitation token generation
+ * - Expiration handling
+ * - Pending/Expired/Accepted scopes
+ * - Relationship to inviter (user)
+ *
+ * You can override any method or property from the base class.
+ */
+class Invitation extends BaseInvitation
+{
+    /**
+     * Default expiration time in days.
+     * Override this to change the default expiry time.
+     */
+    public const DEFAULT_EXPIRY_DAYS = 7;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'email',
+        'token',
+        'invited_by',
+        'expires_at',
+        'accepted_at',
+        'data',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'expires_at' => 'datetime',
+        'accepted_at' => 'datetime',
+        'data' => 'array',
+    ];
+
+    /**
+     * Searchable fields for the model.
+     *
+     * @var array<string>
+     */
+    public array $searchable = [
+        'email',
+    ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | Custom Methods
+    |--------------------------------------------------------------------------
+    |
+    | Add your custom invitation methods below. You can also override any
+    | method from the base EasyPack\Models\Invitation class.
+    |
+    | Available methods to override:
+    | - inviter() - Relationship to the user who sent the invitation
+    | - scopePending($query) - Scope for pending invitations
+    | - scopeExpired($query) - Scope for expired invitations
+    | - scopeAccepted($query) - Scope for accepted invitations
+    | - isPending(): bool - Check if invitation is pending
+    | - isExpired(): bool - Check if invitation is expired
+    | - isAccepted(): bool - Check if invitation is accepted
+    | - markAsAccepted(): bool - Mark invitation as accepted
+    | - generateToken(): string - Generate a new invitation token
+    | - findByToken($token): ?self - Find invitation by token
+    | - findValidByToken($token): ?self - Find valid invitation by token
+    |
+    */
+}

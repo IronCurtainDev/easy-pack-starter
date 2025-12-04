@@ -1,0 +1,20 @@
+<?php
+
+namespace {{ namespace }};
+
+use EasyPack\Entities\BaseRepository;
+
+class {{ class }} extends BaseRepository
+{
+    /**
+     * Get the model class for this repository.
+     *
+     * @return string
+     */
+    protected function getModelClass(): string
+    {
+        return {{entitySingular}}::class;
+    }
+
+    // Add custom repository methods here
+}
