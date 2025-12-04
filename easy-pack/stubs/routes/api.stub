@@ -38,7 +38,7 @@ $packageNamespace = 'EasyPack\\Http\\Controllers\\Api\\V1';
 
 $getController = function ($name, $className) use ($useLocalControllers, $localNamespace, $packageNamespace) {
     // Check for specific controller override in config
-    $localMapping = config("oxygen.local_api_controllers.{$name}");
+    $localMapping = config("easypack.local_api_controllers.{$name}");
     if ($localMapping && class_exists($localMapping)) {
         return $localMapping;
     }

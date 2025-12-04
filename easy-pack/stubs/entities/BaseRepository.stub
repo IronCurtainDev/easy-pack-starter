@@ -2,7 +2,7 @@
 
 namespace App\Entities;
 
-use EasyPack\Entities\BaseRepository as OxygenBaseRepository;
+use EasyPack\Entities\BaseRepository as EasyPackBaseRepository;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -27,7 +27,7 @@ use Illuminate\Support\Facades\Storage;
  *       }
  *   }
  */
-abstract class BaseRepository extends OxygenBaseRepository
+abstract class BaseRepository extends EasyPackBaseRepository
 {
     /**
      * Hook called before saving the model.

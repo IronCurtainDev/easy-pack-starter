@@ -38,7 +38,7 @@ return [
     | - Easier customization and route overrides
     | - Better IDE support and route discovery
     |
-    | To publish routes: php artisan vendor:publish --tag=oxygen-routes
+    | To publish routes: php artisan vendor:publish --tag=easypack-routes
     |
     */
 
@@ -102,7 +102,7 @@ return [
     |
     */
 
-    'user_model' => \Oxygen\Starter\Models\User::class,
+    'user_model' => \EasyPack\Starter\Models\User::class,
 
     /*
     |--------------------------------------------------------------------------
@@ -167,7 +167,7 @@ return [
     | logic while still using the package routes structure.
     |
     | To enable:
-    | 1. Run: php artisan oxygen:publish --customizable
+    | 1. Run: php artisan easypack:publish --customizable
     | 2. Set EASYPACK_USE_LOCAL_CONTROLLERS=true in .env
     |
     | Or selectively enable for API/Admin:

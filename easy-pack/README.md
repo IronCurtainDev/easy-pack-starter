@@ -127,15 +127,15 @@ php artisan route:list --path=api/v1
 In `config/sanctum.php`:
 
 ```php
-'personal_access_token' => Oxygen\Starter\Models\PersonalAccessToken::class,
+'personal_access_token' => EasyPack\Starter\Models\PersonalAccessToken::class,
 ```
 
 ### 3. Update your User model
 
 ```php
-use Oxygen\Starter\Models\User as OxygenUser;
+use EasyPack\Starter\Models\User as BaseUser;
 
-class User extends OxygenUser
+class User extends BaseUser
 {
     // Your customizations
 }
@@ -150,7 +150,7 @@ php artisan migrate
 ### 5. Seed roles and permissions
 
 ```bash
-php artisan db:seed --class=Oxygen\\Starter\\Database\\Seeders\\EasyPackSeeder
+php artisan db:seed --class=EasyPack\\Starter\\Database\\Seeders\\EasyPackSeeder
 ```
 
 ## Usage
@@ -258,13 +258,13 @@ Or configure individual controller overrides in `config/easypack.php`:
 
 #### Customizing the User Model
 
-The published User model extends `Oxygen\Starter\Models\User`:
+The published User model extends `EasyPack\Starter\Models\User`:
 
 ```php
 // app/Models/User.php
 namespace App\Models;
 
-use Oxygen\Starter\Models\User as BaseUser;
+use EasyPack\Starter\Models\User as BaseUser;
 
 class User extends BaseUser
 {
@@ -304,7 +304,7 @@ Published controllers extend package controllers, allowing you to:
 // app/Http/Controllers/Api/AuthController.php
 namespace App\Http\Controllers\Api;
 
-use Oxygen\Starter\Http\Controllers\Api\AuthController as BaseAuthController;
+use EasyPack\Starter\Http\Controllers\Api\AuthController as BaseAuthController;
 
 class AuthController extends BaseAuthController
 {
@@ -332,7 +332,7 @@ class AuthController extends BaseAuthController
 
 #### Using Repository Entities
 
-Published repositories extend `Oxygen\Starter\Entities\BaseRepository`:
+Published repositories extend `EasyPack\Starter\Entities\BaseRepository`:
 
 ```php
 // app/Entities/Users/UsersRepository.php
@@ -436,7 +436,7 @@ php artisan make:easypack:admin-controller Product
 ### Settings Manager
 
 ```php
-use Oxygen\Starter\Facades\Setting;
+use EasyPack\Starter\Facades\Setting;
 
 // Get a setting
 $value = Setting::get('app_name', 'Default App');
@@ -463,7 +463,7 @@ setting_set('app_name', 'New Value');
 Build dynamic navigation menus:
 
 ```php
-use Oxygen\Starter\Facades\Navigator;
+use EasyPack\Starter\Facades\Navigator;
 
 // Add navigation item
 Navigator::addItem([
@@ -502,7 +502,7 @@ return response()->apiUnauthorized('Invalid token');
 ### Push Notifications
 
 ```php
-use Oxygen\Starter\Models\NotificationBuilder;
+use EasyPack\Starter\Models\NotificationBuilder;
 
 // Send to user
 NotificationBuilder::create()
@@ -536,7 +536,7 @@ php artisan easypack:send-notifications
 ### Media Attachments
 
 ```php
-use Oxygen\Starter\Traits\HasMediaAttachments;
+use EasyPack\Starter\Traits\HasMediaAttachments;
 
 class Product extends Model implements HasMedia
 {
