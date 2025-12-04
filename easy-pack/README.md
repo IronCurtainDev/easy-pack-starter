@@ -8,21 +8,39 @@ A comprehensive Laravel starter kit for building API-driven applications with mo
 
 ## Quick Start
 
+### Option 1: Create a New Project (Recommended)
+
+```bash
+# Create a new Laravel project with Easy Pack
+composer create-project easypack/starter my-project
+
+# Navigate to the project directory
+cd my-project
+
+# Setup the environment (database, etc.)
+# Update .env with your database credentials first!
+
+# Run the installer
+php artisan easypack:install
+
+# Generate API documentation and tests
+php artisan generate:docs-tests
+
+# Start the server
+php artisan serve
+```
+
+### Option 2: Add to Existing Project
+
 ```bash
 # Install the package
 composer require easypack/starter
 
-# Run the installer (handles everything automatically)
+# Run the installer
 php artisan easypack:install
-
-# Generate API documentation
-php artisan generate:docs
-
-# Start the server and view docs at /docs/swagger.html
-php artisan serve
 ```
 
-That's it! The installer handles database setup, migrations, seeders, and configuration automatically.
+The installer handles database setup, migrations, seeders, and configuration automatically.
 
 ## Features
 
@@ -537,6 +555,61 @@ $product->getMediaUrls('images');
 $product->getFirstMediaUrl('images', 'thumb');
 ```
 
+## Common Workflows
+
+### 1. Creating a New Resource (CRUD)
+
+To create a full set of components for a new resource (e.g., "Product"), use the CRUD generator:
+
+```bash
+php artisan make:easypack:crud Product --all
+```
+
+This will generate:
+- `app/Models/Product.php`
+- `app/Entities/Products/ProductsRepository.php`
+- `app/Http/Controllers/Api/ProductController.php`
+- `app/Http/Controllers/Admin/ProductController.php`
+- Migration file (you'll need to edit this)
+
+**Step-by-step:**
+
+1.  **Run the command:** `php artisan make:easypack:crud Product --all`
+2.  **Edit Migration:** Open the generated migration file in `database/migrations` and add your columns.
+3.  **Run Migration:** `php artisan migrate`
+4.  **Register Routes:** Add routes in `routes/api.php`:
+    ```php
+    Route::apiResource('products', \App\Http\Controllers\Api\ProductController::class);
+    ```
+5.  **Generate Docs:** `php artisan generate:docs` to see your new endpoints in Swagger.
+
+### 2. Generating and Testing Documentation
+
+Easy Pack can automatically generate Swagger/OpenAPI documentation and even create tests based on it.
+
+**Generate Documentation Only:**
+
+```bash
+php artisan generate:docs
+```
+View at: `http://your-app.test/docs/swagger.html`
+
+**Generate Tests from Documentation:**
+
+Once you have documentation, you can generate PHPUnit tests that verify your API matches the docs:
+
+```bash
+php artisan generate:api-tests
+```
+
+**The "All-in-One" Command:**
+
+To generate docs, generate tests, and run them all in one go (great for CI/CD):
+
+```bash
+php artisan generate:docs-tests
+```
+
 ## Artisan Commands
 
 | Command | Description |
@@ -558,6 +631,9 @@ $product->getFirstMediaUrl('images', 'thumb');
 | `make:easypack:api-controller` | Generate an API controller |
 | `make:easypack:admin-controller` | Generate an admin controller |
 | `make:easypack:crud` | Generate complete CRUD scaffolding |
+| `generate:docs` | Generate API documentation (Swagger/Postman) |
+| `generate:api-tests` | Generate API tests from documentation |
+| `generate:docs-tests` | Generate API Documentation, API Tests, and Run Tests |
 
 ## Configuration Options
 
