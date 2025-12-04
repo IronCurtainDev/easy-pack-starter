@@ -337,6 +337,10 @@ class InstallCommand extends Command
             }
         }
 
+        // Add API Key configuration
+        $envUpdates['API_ACTIVE'] = 'false';
+        $envUpdates['API_KEY'] = '"sB5ROi64SAEhZz3q0N2aTzgDtDDrB2ZF5b667Nr8efQ="';
+
         // Update .env file
         $this->updateEnvFile($envUpdates);
         
@@ -344,6 +348,7 @@ class InstallCommand extends Command
         Artisan::call('config:clear', [], $this->output);
         
         $this->line("  <fg=green>✓</> Environment configured");
+        $this->line("  <fg=green>✓</> API key configuration added");
         $this->newLine();
     }
 
