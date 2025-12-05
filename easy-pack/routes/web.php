@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use EasyPack\Http\Controllers\Common\PagesController;
 
 /*
 |--------------------------------------------------------------------------
@@ -11,6 +12,17 @@ use Illuminate\Support\Facades\Route;
 | is enabled. They provide web-based authentication and admin dashboard.
 |
 */
+
+/*
+|--------------------------------------------------------------------------
+| Public Routes (Contact Us)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('web')->group(function () {
+    Route::get('/contact-us', [PagesController::class, 'contactUs'])->name('contact-us');
+    Route::post('/contact-us', [PagesController::class, 'postContactUs']);
+});
 
 // Only load if admin panel is enabled
 if (!function_exists('is_admin_panel_enabled') || !is_admin_panel_enabled()) {

@@ -49,6 +49,7 @@ The installer handles database setup, migrations, seeders, and configuration aut
 - 🖼️ **Media Management** - Spatie Media Library integration with convenient traits
 - ⚙️ **Settings Management** - Key-value settings with groups and type casting
 - 🛡️ **Role & Permission** - Spatie Permission integration with pre-configured roles
+- 📧 **Contact Us Form** - Built-in contact form with email notifications and optional reCAPTCHA support
 - 🧩 **Scaffolding Commands** - Generate models, repositories, controllers, and views
 - 📝 **Repository Pattern** - Base repository with search, pagination, and filtering
 - 🌐 **API Response Macros** - Consistent JSON response format for APIs
@@ -553,6 +554,56 @@ class Product extends Model implements HasMedia
 $product->addMediaFile($request->file('image'), 'images');
 $product->getMediaUrls('images');
 $product->getFirstMediaUrl('images', 'thumb');
+```
+
+### Contact Us Form
+
+Easy Pack includes a ready-to-use contact form accessible at `/contact-us`. The form collects visitor information and sends email notifications to the webmaster.
+
+**Configuration:**
+
+Add the following to your `.env` file:
+
+```env
+# Required: Where contact form submissions are sent
+WEBMASTER_EMAIL="admin@example.com"
+
+# Optional: Enable reCAPTCHA for spam protection
+RECAPTCHA_ENABLED=false
+RECAPTCHA_SITE_KEY=""
+RECAPTCHA_SECRET_KEY=""
+```
+
+**Features:**
+- Modern gradient design with responsive layout
+- Validation for name, email, and message fields
+- Optional phone field
+- Flash message feedback
+- Optional reCAPTCHA integration for spam protection
+- Email notifications with contact details and timestamp
+
+**Usage:**
+
+The contact form is automatically available at `http://your-app.test/contact-us` once the package is installed.
+
+To customize the contact form view, publish it:
+
+```bash
+php artisan vendor:publish --tag=easypack-views
+```
+
+**Form Fields:**
+- Name (required)
+- Email (required)
+- Phone (optional)
+- Message (required, max 255 characters)
+
+**Email Template:**
+
+Email notifications include:
+- User's name, email, and phone
+- Message content
+- Submission timestamp and IP address
 ```
 
 ## Common Workflows
