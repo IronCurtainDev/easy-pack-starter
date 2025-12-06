@@ -23,7 +23,11 @@ cd my-project
 # Run the installer
 php artisan easypack:install
 
+# Install ApiDoc.js for HTML documentation (required for /docs/api endpoint)
+npm install -g apidoc
+
 # Generate API documentation and tests
+# This creates HTML docs at /docs/api and Swagger UI at /docs/swagger.html
 php artisan generate:docs-tests
 
 # Start the server
@@ -640,10 +644,24 @@ Easy Pack can automatically generate Swagger/OpenAPI documentation and even crea
 
 **Generate Documentation Only:**
 
+> [!IMPORTANT]
+> To access the HTML documentation at `/docs/api/index.html`, you must first install ApiDoc.js:
+> ```bash
+> npm install -g apidoc
+> ```
+> 
+> The Swagger UI at `/docs/swagger.html` is available immediately after running `generate:docs`, without requiring ApiDoc.js.
+
 ```bash
 php artisan generate:docs
 ```
-View at: `http://your-app.test/docs/swagger.html`
+
+**Available Documentation Formats:**
+- **HTML Documentation**: `http://your-app.test/docs/api/index.html` (requires ApiDoc.js)
+- **Swagger UI**: `http://your-app.test/docs/swagger.html` (always available)
+- **OpenAPI 3.0 JSON**: `http://your-app.test/docs/openapi.json`
+- **Swagger 2.0 JSON**: `http://your-app.test/docs/swagger.json`
+- **Postman Collection**: `http://your-app.test/docs/postman_collection.json`
 
 **Generate Tests from Documentation:**
 
