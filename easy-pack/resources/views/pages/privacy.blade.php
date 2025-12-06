@@ -6,6 +6,9 @@
 
 @section('internal-page-contents')
     <div>
+        @if(isset($content))
+            {!! $content !!}
+        @else
         <h3>What information do we collect?</h3>
         <p>We collect information from you when you register on our site, place an order, subscribe to our newsletter, respond to a survey or fill out a form.</p>
 
@@ -92,6 +95,6 @@
 
         <h3>Contacting Us</h3>
         <p>If there are any questions regarding this privacy policy you may contact us using the contact information on the contact section (This is available form the site's navigation).</p>
-
+        @endif
     </div>
 @stop

@@ -6,7 +6,9 @@
 
 @section('internal-page-contents')
     <div>
-
+        @if(isset($content))
+            {!! $content !!}
+        @else
         <h2>
             Terms and Conditions of Use
         </h2>
@@ -101,5 +103,6 @@
         <p>
             General Terms and Conditions applicable to Use of a Web Site.
         </p>
+        @endif
     </div>
 @stop

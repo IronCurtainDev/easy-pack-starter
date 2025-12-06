@@ -16,6 +16,16 @@ class PagesController extends Controller
      */
     public function privacyPolicy()
     {
+        $pageContent = \EasyPack\Models\PageContent::getBySlug('privacy-policy');
+        
+        if ($pageContent) {
+            return view('easypack::pages.privacy', [
+                'pageTitle' => $pageContent->title,
+                'content' => $pageContent->content,
+            ]);
+        }
+
+        // Fallback to static view if no database content
         return view('easypack::pages.privacy', ['pageTitle' => 'Privacy Policy']);
     }
 
@@ -26,6 +36,16 @@ class PagesController extends Controller
      */
     public function termsConditions()
     {
+        $pageContent = \EasyPack\Models\PageContent::getBySlug('terms-conditions');
+        
+        if ($pageContent) {
+            return view('easypack::pages.terms', [
+                'pageTitle' => $pageContent->title,
+                'content' => $pageContent->content,
+            ]);
+        }
+
+        // Fallback to static view if no database content
         return view('easypack::pages.terms', ['pageTitle' => 'Terms & Conditions']);
     }
 

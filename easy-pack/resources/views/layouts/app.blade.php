@@ -1381,13 +1381,12 @@
                 @yield('content')
             </div>
 
-            <!-- Footer -->
             <footer class="footer">
                 <div class="d-flex justify-content-between align-items-center">
                     <span>&copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</span>
                     <span>
-                        <a href="#" class="text-decoration-none me-3" style="color: #706f6c;">Privacy</a>
-                        <a href="#" class="text-decoration-none" style="color: #706f6c;">Terms</a>
+                        <a href="{{ route('pages.privacy-policy') }}" class="text-decoration-none me-3" style="color: #706f6c;">Privacy</a>
+                        <a href="{{ route('pages.terms-conditions') }}" class="text-decoration-none" style="color: #706f6c;">Terms</a>
                     </span>
                 </div>
             </footer>

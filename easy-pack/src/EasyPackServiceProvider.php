@@ -388,12 +388,20 @@ class EasyPackServiceProvider extends ServiceProvider
             'order' => 10,
         ], 'sidebar');
 
+        // Pages menu item
+        Navigator::addItem([
+            'text' => 'Pages',
+            'resource' => 'manage.pages.index',
+            'icon_class' => 'fas fa-file-alt',
+            'order' => 11,
+        ], 'sidebar');
+
         // Role Management
         Navigator::addItem([
             'text' => 'Roles',
             'resource' => 'manage.roles.index',
             'icon_class' => 'fas fa-user-tag',
-            'order' => 11,
+            'order' => 12,
         ], 'sidebar');
 
         // Permission Management
@@ -401,7 +409,7 @@ class EasyPackServiceProvider extends ServiceProvider
             'text' => 'Permissions',
             'resource' => 'manage.permissions.index',
             'icon_class' => 'fas fa-key',
-            'order' => 12,
+            'order' => 13,
         ], 'sidebar');
 
         // Device Management (if module enabled)
