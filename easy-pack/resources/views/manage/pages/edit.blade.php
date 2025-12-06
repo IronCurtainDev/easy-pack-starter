@@ -44,10 +44,13 @@
 
                         <div class="mb-3">
                             <label for="content" class="form-label">Content</label>
+                            <!-- Quill Editor Container -->
+                            <div id="editor"></div>
+                            <!-- Hidden textarea to store content -->
                             <textarea class="form-control @error('content') is-invalid @enderror" 
-                                      id="content" name="content" rows="20">{{ old('content', $page->content) }}</textarea>
+                                      id="content" name="content" style="display: none;">{{ old('content', $page->content) }}</textarea>
                             @error('content')
-                                <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
                             @enderror
                         </div>
 
@@ -109,30 +112,57 @@
 </div>
 @endsection
 
-@push('scripts')
-<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
-<script>
-    tinymce.init({
-        selector: '#content',
-        height: 500,
-        menubar: false,
-        plugins: [
-            'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-            'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-            'insertdatetime', 'media', 'table', 'help', 'wordcount'
-        ],
-        toolbar: 'undo redo | blocks | ' +
-            'bold italic forecolor | alignleft aligncenter ' +
-            'alignright alignjustify | bullist numlist outdent indent | ' +
-            'removeformat | link | code | help',
-        content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
-        branding: false,
-        promotion: false
-    });
+@push('styles')
+<!-- Include Quill stylesheet -->
+<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+<style>
+    #editor {
+        height: 500px;
+    }
+    .ql-editor {
+        min-height: 500px;
+    }
+</style>
+@endpush
 
-    // Sync TinyMCE content before form submission
-    document.getElementById('pageForm').addEventListener('submit', function(e) {
-        tinymce.triggerSave();
+@push('scripts')
+<!-- Include Quill library -->
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Quill editor
+        var quill = new Quill('#editor', {
+            theme: 'snow',
+            placeholder: 'Enter page content...',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'color': [] }, { 'background': [] }],
+                    [{ 'align': [] }],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'indent': '-1'}, { 'indent': '+1' }],
+                    ['blockquote', 'code-block'],
+                    ['link', 'image'],
+                    ['clean']
+                ]
+            }
+        });
+
+        // Load existing content into Quill editor
+        var contentTextarea = document.getElementById('content');
+        var existingContent = contentTextarea.value;
+        
+        if (existingContent && existingContent.trim() !== '') {
+            // Set the HTML content in the Quill editor
+            quill.root.innerHTML = existingContent;
+        }
+
+        // Sync Quill content to hidden textarea before form submission
+        document.getElementById('pageForm').addEventListener('submit', function(e) {
+            var html = quill.root.innerHTML;
+            contentTextarea.value = html;
+        });
     });
 </script>
 @endpush
