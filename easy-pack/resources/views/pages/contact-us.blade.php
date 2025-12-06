@@ -29,7 +29,6 @@
             min-height: 100vh;
             background-color: #F8F9FA;
             color: #1b1b18;
-            padding: 2rem 0;
         }
 
         /* Dark Mode */
@@ -139,6 +138,9 @@
         }
 
         .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
             background-color: white;
             border-bottom: 1px solid #e3e3e0;
             padding: 1rem 0;
@@ -212,7 +214,7 @@
         </div>
     </nav>
 
-    <div class="container">
+    <div class="container" style="padding-top: 2rem; padding-bottom: 2rem;">
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 <i class="fas fa-check-circle me-2"></i>
