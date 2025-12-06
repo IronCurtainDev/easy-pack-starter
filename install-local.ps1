@@ -1,4 +1,20 @@
-﻿<#
+﻿# ============================================================================
+# EXECUTION POLICY ERROR?
+# ============================================================================
+# If you see "running scripts is disabled on this system", run ONE of these:
+#
+# Option 1 - Bypass for current session only (recommended):
+#   Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+#   .\install-local.ps1 my-api-project -Quick
+#
+# Option 2 - Run directly with bypass:
+#   powershell -ExecutionPolicy Bypass -File .\install-local.ps1 my-api-project -Quick
+#
+# Option 3 - Change policy permanently for current user:
+#   Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+# ============================================================================
+
+<#
 .SYNOPSIS
     Easy Pack - Local Development Installer for Windows
     
@@ -7,6 +23,10 @@
     when developing locally (before publishing to Packagist).
     
     PORTABLE: Copy the entire folder to any Windows machine and run this script.
+    
+    EXECUTION POLICY: If you get "running scripts is disabled" error, run:
+        Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+    Then run this script again.
 
 .PARAMETER ProjectName
     Name of the project to create
@@ -61,6 +81,10 @@
 
 .EXAMPLE
     .\install-local.ps1 my-project -Offline -Quick
+
+.EXAMPLE
+    # If execution policy blocks the script:
+    Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass; .\install-local.ps1 my-api-project -Quick
 #>
 
 [CmdletBinding()]
