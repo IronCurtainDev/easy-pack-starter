@@ -65,7 +65,7 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Position=0)]
+    [Parameter(Position = 0)]
     [string]$ProjectName = "",
     
     [string]$DbName = "",
@@ -132,7 +132,8 @@ function Test-CommandExists($command) {
         if (Get-Command $command -ErrorAction SilentlyContinue) {
             return $true
         }
-    } catch {
+    }
+    catch {
         return $false
     }
     return $false
@@ -142,7 +143,8 @@ function Get-PhpVersionNumber {
     try {
         $version = php -r "echo PHP_VERSION_ID;" 2>$null
         return [int]$version
-    } catch {
+    }
+    catch {
         return 0
     }
 }
@@ -158,26 +160,28 @@ function Test-PhpExtension($extension) {
     try {
         $modules = php -m 2>$null | ForEach-Object { $_.Trim() }
         return $modules -contains $extension
-    } catch {
+    }
+    catch {
         return $false
     }
 }
 
 function Test-MySQLConnection {
-    if (-not (Test-CommandExists "mysql")) {
+    $exists = Test-CommandExists "mysql"
+    if (-not $exists) {
         return $false
     }
     
     try {
-        $mysqlCmd = "mysql -h $DbHost -P $DbPort -u $DbUser"
+        $mysqlArgs = @("-h", $DbHost, "-P", $DbPort, "-u", $DbUser, "-e", "SELECT 1")
         if ($DbPassword) {
-            $mysqlCmd += " -p$DbPassword"
+            $mysqlArgs += "-p$DbPassword"
         }
-        $mysqlCmd += " -e 'SELECT 1' 2>$null"
         
-        Invoke-Expression $mysqlCmd | Out-Null
+        & mysql $mysqlArgs 2>$null | Out-Null
         return $?
-    } catch {
+    }
+    catch {
         return $false
     }
 }
@@ -228,12 +232,14 @@ function Invoke-DependencyChecks {
         
         if (Test-PhpVersion) {
             Write-Check "ok" "PHP installed" "(v$phpVersion)"
-        } else {
+        }
+        else {
             Write-Check "fail" "PHP version" "(v$phpVersion - need $MIN_PHP_VERSION+)"
             $hasErrors = $true
             $missingPackages += "php"
         }
-    } else {
+    }
+    else {
         Write-Check "fail" "PHP not installed" ""
         $hasErrors = $true
         $missingPackages += "php"
@@ -253,7 +259,8 @@ function Invoke-DependencyChecks {
     foreach ($ext in $requiredExtensions) {
         if (Test-PhpExtension $ext) {
             Write-Check "ok" $ext ""
-        } else {
+        }
+        else {
             Write-Check "fail" $ext "(missing)"
             $hasErrors = $true
             $missingPackages += "php-$ext"
@@ -266,7 +273,8 @@ function Invoke-DependencyChecks {
     if (Test-CommandExists "composer") {
         $composerVersion = composer --version 2>$null | Select-Object -First 1
         Write-Check "ok" "Composer installed" "($composerVersion)"
-    } else {
+    }
+    else {
         Write-Check "fail" "Composer not installed" ""
         $hasErrors = $true
         $missingPackages += "composer"
@@ -277,20 +285,25 @@ function Invoke-DependencyChecks {
     Write-Host "Database ($DbType):" -ForegroundColor White
     if ($DbType -eq "sqlite") {
         Write-Check "ok" "SQLite" "(no server required)"
-    } elseif ($DbType -eq "mysql") {
+    }
+    elseif ($DbType -eq "mysql") {
         if (Test-CommandExists "mysql") {
             if (Test-MySQLConnection) {
-                Write-Check "ok" "MySQL connection" "($DbUser@$DbHost:$DbPort)"
-            } else {
+                Write-Check "ok" "MySQL connection" "($DbUser`@${DbHost}:$DbPort)"
+            }
+            else {
                 Write-Check "warn" "MySQL installed but cannot connect" "(will retry during install)"
             }
-        } else {
+        }
+        else {
             Write-Check "warn" "MySQL client not installed" "(optional for connection test)"
         }
-    } elseif ($DbType -eq "pgsql") {
+    }
+    elseif ($DbType -eq "pgsql") {
         if (Test-CommandExists "psql") {
             Write-Check "ok" "PostgreSQL client" "(installed)"
-        } else {
+        }
+        else {
             Write-Check "warn" "PostgreSQL client not installed" "(optional)"
         }
     }
@@ -300,7 +313,8 @@ function Invoke-DependencyChecks {
     Write-Host "Other Tools:" -ForegroundColor White
     if (Test-CommandExists "git") {
         Write-Check "ok" "git" "(optional - for version control)"
-    } else {
+    }
+    else {
         Write-Check "warn" "git not installed" "(optional)"
     }
     
@@ -310,14 +324,16 @@ function Invoke-DependencyChecks {
     $availableSpace = Get-AvailableSpaceMB
     if ($availableSpace -gt 500) {
         Write-Check "ok" "Disk space" "(${availableSpace}MB available)"
-    } else {
+    }
+    else {
         Write-Check "warn" "Low disk space" "(${availableSpace}MB - recommend 500MB+)"
     }
     
     $currentPath = Get-Location
     if (Test-Path -Path $currentPath -PathType Container) {
         Write-Check "ok" "Directory writable" "($currentPath)"
-    } else {
+    }
+    else {
         Write-Check "fail" "Directory not writable" "($currentPath)"
         $hasErrors = $true
     }
@@ -327,11 +343,13 @@ function Invoke-DependencyChecks {
     Write-Host "Offline Cache:" -ForegroundColor White
     if ((Test-Path $LARAVEL_CACHE) -and (Test-Path (Join-Path $LARAVEL_CACHE "composer.json"))) {
         Write-Check "ok" "Laravel cache available" "($LARAVEL_CACHE)"
-    } else {
+    }
+    else {
         if ($Offline) {
             Write-Check "fail" "Offline cache not found" "(run --PrepareOffline first)"
             $hasErrors = $true
-        } else {
+        }
+        else {
             Write-Check "warn" "Offline cache not prepared" "(use -PrepareOffline)"
         }
     }
@@ -360,7 +378,8 @@ function Invoke-DependencyChecks {
         }
         
         return $false
-    } else {
+    }
+    else {
         Write-Host ""
         Write-ColorOutput Green "All dependencies satisfied!"
         return $true
@@ -385,8 +404,9 @@ function Install-Dependencies {
             Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
             
             # Refresh environment variables
-            $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-        } catch {
+            $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
+        }
+        catch {
             Write-ColorOutput Red "Failed to install Chocolatey. Please install manually from https://chocolatey.org/"
             exit 1
         }
@@ -413,7 +433,7 @@ function Install-Dependencies {
     }
     
     # Refresh environment variables
-    $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
     
     Write-Host ""
     Write-ColorOutput Green "Dependencies installed successfully!"
@@ -461,12 +481,12 @@ function Start-OfflineCachePreparation {
     # Add local repository to composer.json
     $composerJson = Get-Content "composer.json" -Raw | ConvertFrom-Json
     $composerJson | Add-Member -MemberType NoteProperty -Name "repositories" -Value @(@{
-        type = "path"
-        url = $EASYPACK_PATH
-        options = @{
-            symlink = $false
-        }
-    }) -Force
+            type    = "path"
+            url     = $EASYPACK_PATH
+            options = @{
+                symlink = $false
+            }
+        }) -Force
     $composerJson | ConvertTo-Json -Depth 10 | Set-Content "composer.json"
     
     # Install easy-pack (this downloads all dependencies)
@@ -521,7 +541,8 @@ if ($CheckDeps) {
     $result = Invoke-DependencyChecks
     if ($result) {
         exit 0
-    } else {
+    }
+    else {
         exit 1
     }
 }
@@ -558,7 +579,8 @@ if (-not $checkResult) {
         Write-ColorOutput Yellow "Warning: Some dependencies are missing. Installation may fail."
         Write-ColorOutput Yellow "Continuing in quick mode..."
         Write-Host ""
-    } else {
+    }
+    else {
         Write-ColorOutput Red "Please install missing dependencies before continuing."
         Write-ColorOutput Yellow "Use -InstallDeps to auto-install, or -Quick to skip this check."
         exit 1
@@ -592,7 +614,7 @@ if (Test-Path $ProjectName) {
 # Show configuration
 Write-ColorOutput Cyan "Configuration:"
 Write-Host "  Project Name: $ProjectName"
-Write-Host "  Database: $DbType ($DbName@$DbHost:$DbPort)"
+Write-Host "  Database: $DbType ($DbName`@${DbHost}:$DbPort)"
 Write-Host "  DB User: $DbUser"
 Write-Host "  Quick Mode: $Quick"
 Write-Host "  Offline Mode: $Offline"
@@ -635,7 +657,8 @@ if ($Offline) {
     composer dump-autoload
     
     Write-Success "Laravel project created from cache"
-} else {
+}
+else {
     # Online installation: download fresh
     composer create-project laravel/laravel $ProjectName
     Push-Location $ProjectName
@@ -654,12 +677,12 @@ if (-not $Offline) {
     
     # Add repositories section with local path
     $composerJson | Add-Member -MemberType NoteProperty -Name "repositories" -Value @(@{
-        type = "path"
-        url = $EASYPACK_PATH
-        options = @{
-            symlink = $true
-        }
-    }) -Force
+            type    = "path"
+            url     = $EASYPACK_PATH
+            options = @{
+                symlink = $true
+            }
+        }) -Force
     
     $composerJson | ConvertTo-Json -Depth 10 | Set-Content "composer.json"
 }
@@ -683,7 +706,8 @@ if ($Offline) {
     
     composer dump-autoload
     Write-Success "Easy Pack linked from cache"
-} else {
+}
+else {
     # Online mode: require the package
     composer require easypack/starter:@dev --no-interaction
     Write-Success "Easy Pack installed"
