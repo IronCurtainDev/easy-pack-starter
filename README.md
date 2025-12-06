@@ -79,6 +79,23 @@ php artisan easypack:install
 composer create-project easypack/starter my-project
 ```
 
+### Local Development (Ubuntu & Windows)
+
+For local development before publishing to Packagist:
+
+**Ubuntu/Linux:**
+```bash
+./install-local.sh my-project --quick
+```
+
+**Windows:**
+```powershell
+.\install-local.ps1 my-project -Quick
+```
+
+See [PORTABLE.md](PORTABLE.md) for detailed instructions on portable installations across Ubuntu and Windows.
+
+
 ## Configuration
 
 After installation, publish the config files:
