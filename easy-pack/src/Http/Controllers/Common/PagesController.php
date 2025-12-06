@@ -10,6 +10,26 @@ use Illuminate\Support\Facades\Mail;
 class PagesController extends Controller
 {
     /**
+     * Show Privacy Policy Page
+     *
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function privacyPolicy()
+    {
+        return view('easypack::pages.privacy', ['pageTitle' => 'Privacy Policy']);
+    }
+
+    /**
+     * Show Terms & Conditions Page
+     *
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function termsConditions()
+    {
+        return view('easypack::pages.terms', ['pageTitle' => 'Terms & Conditions']);
+    }
+
+    /**
      * Show Contact Us Page
      *
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View

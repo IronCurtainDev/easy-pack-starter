@@ -22,6 +22,8 @@ use EasyPack\Http\Controllers\Common\PagesController;
 Route::middleware('web')->group(function () {
     Route::get('/contact-us', [PagesController::class, 'contactUs'])->name('contact-us');
     Route::post('/contact-us', [PagesController::class, 'postContactUs']);
+    Route::get('/privacy-policy', [PagesController::class, 'privacyPolicy'])->name('pages.privacy-policy');
+    Route::get('/terms-conditions', [PagesController::class, 'termsConditions'])->name('pages.terms-conditions');
 });
 
 // Only load if admin panel is enabled
