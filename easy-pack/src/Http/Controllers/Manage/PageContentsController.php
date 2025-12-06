@@ -33,6 +33,10 @@ class PageContentsController extends Controller
     {
         $page = PageContent::where('slug', $slug)->firstOrFail();
 
+        if (empty($page->content)) {
+            $page->content = PageContent::getDefaultContent($slug);
+        }
+
         return view('easypack::manage.pages.edit', [
             'pageTitle' => 'Edit Page: ' . $page->title,
             'page' => $page,

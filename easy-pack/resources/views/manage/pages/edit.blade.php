@@ -48,7 +48,7 @@
                             <div id="editor"></div>
                             <!-- Hidden textarea to store content -->
                             <textarea class="form-control @error('content') is-invalid @enderror" 
-                                      id="content" name="content" style="display: none;">{{ old('content', $page->content) }}</textarea>
+                                      id="content" name="content" style="display: none;">{!! old('content', $page->content) !!}</textarea>
                             @error('content')
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
                             @enderror

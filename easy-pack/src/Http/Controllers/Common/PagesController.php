@@ -18,15 +18,13 @@ class PagesController extends Controller
     {
         $pageContent = \EasyPack\Models\PageContent::getBySlug('privacy-policy');
         
-        if ($pageContent) {
-            return view('easypack::pages.privacy', [
-                'pageTitle' => $pageContent->title,
-                'content' => $pageContent->content,
-            ]);
-        }
+        $content = $pageContent ? $pageContent->content : \EasyPack\Models\PageContent::getDefaultContent('privacy-policy');
+        $title = $pageContent ? $pageContent->title : 'Privacy Policy';
 
-        // Fallback to static view if no database content
-        return view('easypack::pages.privacy', ['pageTitle' => 'Privacy Policy']);
+        return view('easypack::pages.privacy', [
+            'pageTitle' => $title,
+            'content' => $content,
+        ]);
     }
 
     /**
@@ -38,15 +36,13 @@ class PagesController extends Controller
     {
         $pageContent = \EasyPack\Models\PageContent::getBySlug('terms-conditions');
         
-        if ($pageContent) {
-            return view('easypack::pages.terms', [
-                'pageTitle' => $pageContent->title,
-                'content' => $pageContent->content,
-            ]);
-        }
+        $content = $pageContent ? $pageContent->content : \EasyPack\Models\PageContent::getDefaultContent('terms-conditions');
+        $title = $pageContent ? $pageContent->title : 'Terms & Conditions';
 
-        // Fallback to static view if no database content
-        return view('easypack::pages.terms', ['pageTitle' => 'Terms & Conditions']);
+        return view('easypack::pages.terms', [
+            'pageTitle' => $title,
+            'content' => $content,
+        ]);
     }
 
     /**
