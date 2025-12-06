@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Easy Pack - Local Development Installer for Windows
     
