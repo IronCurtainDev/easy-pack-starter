@@ -15,6 +15,7 @@ class EasyPackSeeder extends Seeder
             RolesAndPermissionsSeeder::class,
             SettingsSeeder::class,
             UsersSeeder::class,
+            PageContentsSeeder::class,
         ]);
     }
 }
