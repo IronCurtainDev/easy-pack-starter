@@ -23,7 +23,11 @@ cd my-project
 # Run the installer
 php artisan easypack:install
 
+# Install ApiDoc.js for HTML documentation (required for /docs/api endpoint)
+npm install -g apidoc
+
 # Generate API documentation and tests
+# This creates HTML docs at /docs/api and Swagger UI at /docs/swagger.html
 php artisan generate:docs-tests
 
 # Start the server
@@ -49,6 +53,7 @@ The installer handles database setup, migrations, seeders, and configuration aut
 - 🖼️ **Media Management** - Spatie Media Library integration with convenient traits
 - ⚙️ **Settings Management** - Key-value settings with groups and type casting
 - 🛡️ **Role & Permission** - Spatie Permission integration with pre-configured roles
+- 📧 **Contact Us Form** - Built-in contact form with email notifications and optional reCAPTCHA support
 - 🧩 **Scaffolding Commands** - Generate models, repositories, controllers, and views
 - 📝 **Repository Pattern** - Base repository with search, pagination, and filtering
 - 🌐 **API Response Macros** - Consistent JSON response format for APIs
@@ -555,6 +560,56 @@ $product->getMediaUrls('images');
 $product->getFirstMediaUrl('images', 'thumb');
 ```
 
+### Contact Us Form
+
+Easy Pack includes a ready-to-use contact form accessible at `/contact-us`. The form collects visitor information and sends email notifications to the webmaster.
+
+**Configuration:**
+
+Add the following to your `.env` file:
+
+```env
+# Required: Where contact form submissions are sent
+WEBMASTER_EMAIL="admin@example.com"
+
+# Optional: Enable reCAPTCHA for spam protection
+RECAPTCHA_ENABLED=false
+RECAPTCHA_SITE_KEY=""
+RECAPTCHA_SECRET_KEY=""
+```
+
+**Features:**
+- Modern gradient design with responsive layout
+- Validation for name, email, and message fields
+- Optional phone field
+- Flash message feedback
+- Optional reCAPTCHA integration for spam protection
+- Email notifications with contact details and timestamp
+
+**Usage:**
+
+The contact form is automatically available at `http://your-app.test/contact-us` once the package is installed.
+
+To customize the contact form view, publish it:
+
+```bash
+php artisan vendor:publish --tag=easypack-views
+```
+
+**Form Fields:**
+- Name (required)
+- Email (required)
+- Phone (optional)
+- Message (required, max 255 characters)
+
+**Email Template:**
+
+Email notifications include:
+- User's name, email, and phone
+- Message content
+- Submission timestamp and IP address
+```
+
 ## Common Workflows
 
 ### 1. Creating a New Resource (CRUD)
@@ -589,10 +644,24 @@ Easy Pack can automatically generate Swagger/OpenAPI documentation and even crea
 
 **Generate Documentation Only:**
 
+> [!IMPORTANT]
+> To access the HTML documentation at `/docs/api/index.html`, you must first install ApiDoc.js:
+> ```bash
+> npm install -g apidoc
+> ```
+> 
+> The Swagger UI at `/docs/swagger.html` is available immediately after running `generate:docs`, without requiring ApiDoc.js.
+
 ```bash
 php artisan generate:docs
 ```
-View at: `http://your-app.test/docs/swagger.html`
+
+**Available Documentation Formats:**
+- **HTML Documentation**: `http://your-app.test/docs/api/index.html` (requires ApiDoc.js)
+- **Swagger UI**: `http://your-app.test/docs/swagger.html` (always available)
+- **OpenAPI 3.0 JSON**: `http://your-app.test/docs/openapi.json`
+- **Swagger 2.0 JSON**: `http://your-app.test/docs/swagger.json`
+- **Postman Collection**: `http://your-app.test/docs/postman_collection.json`
 
 **Generate Tests from Documentation:**
 

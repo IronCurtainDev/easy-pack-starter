@@ -599,6 +599,7 @@ class InstallCommand extends Command
     
     /**
      * Test database connection using the .env file directly.
+     * Will attempt to create the database if it doesn't exist.
      */
     protected function testDatabaseConnection(): bool|string
     {
@@ -657,10 +658,18 @@ class InstallCommand extends Command
         } catch (\PDOException $e) {
             $message = $e->getMessage();
             
+            // If database doesn't exist, try to create it
+            if (str_contains($message, 'Unknown database') || str_contains($message, '1049')) {
+                $created = $this->tryCreateDatabase($driver, $host, $port, $database, $username, $password);
+                if ($created === true) {
+                    $this->line("  <fg=green>✓</> Database '{$database}' created automatically");
+                    return true;
+                }
+                return $created; // Return error message if creation failed
+            }
+            
             if (str_contains($message, 'Access denied')) {
                 return "Access denied for user '{$username}'@'{$host}'. Check your password.";
-            } elseif (str_contains($message, 'Unknown database')) {
-                return "Database '{$database}' does not exist. Please create it first.";
             } elseif (str_contains($message, 'Connection refused')) {
                 return "Connection refused. Is the database server running on {$host}:{$port}?";
             } elseif (str_contains($message, 'could not find driver')) {
@@ -668,6 +677,49 @@ class InstallCommand extends Command
             }
             
             return $message;
+        }
+    }
+    
+    /**
+     * Try to create the database if it doesn't exist.
+     */
+    protected function tryCreateDatabase(string $driver, string $host, string $port, string $database, string $username, string $password): bool|string
+    {
+        try {
+            // Connect without specifying database
+            $dsn = match ($driver) {
+                'mysql' => "mysql:host={$host};port={$port}",
+                'pgsql' => "pgsql:host={$host};port={$port}",
+                'sqlsrv' => "sqlsrv:Server={$host},{$port}",
+                default => "mysql:host={$host};port={$port}",
+            };
+            
+            $pdo = new \PDO($dsn, $username, $password, [
+                \PDO::ATTR_TIMEOUT => 5,
+                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            ]);
+            
+            // Create database with appropriate syntax
+            $sql = match ($driver) {
+                'mysql' => "CREATE DATABASE IF NOT EXISTS `{$database}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci",
+                'pgsql' => "CREATE DATABASE \"{$database}\"",
+                default => "CREATE DATABASE `{$database}`",
+            };
+            
+            $pdo->exec($sql);
+            return true;
+            
+        } catch (\PDOException $e) {
+            $message = $e->getMessage();
+            
+            if (str_contains($message, 'Access denied')) {
+                return "Cannot create database: Access denied. Create '{$database}' manually.";
+            } elseif (str_contains($message, 'already exists')) {
+                // Database exists now, that's fine
+                return true;
+            }
+            
+            return "Cannot create database '{$database}': " . $message;
         }
     }
 
@@ -976,28 +1028,51 @@ class InstallCommand extends Command
         
         $content = $this->files->get($sanctumConfigPath);
         
-        // Check if already configured
+        // Check if already configured with our custom model
         if (str_contains($content, 'App\\Models\\PersonalAccessToken')) {
             $this->line("  <fg=green>✓</> Sanctum already configured with custom PersonalAccessToken");
             $this->newLine();
             return;
         }
         
-        // Replace the default model with our custom one
-        // Pattern: 'personal_access_token' => Laravel\Sanctum\PersonalAccessToken::class,
-        // or commented version
-        $patterns = [
-            "/'personal_access_token'\s*=>\s*Laravel\\\\Sanctum\\\\PersonalAccessToken::class/" => "'personal_access_token' => App\\Models\\PersonalAccessToken::class",
-            "/\/\/\s*'personal_access_token'\s*=>\s*null/" => "'personal_access_token' => App\\Models\\PersonalAccessToken::class",
-        ];
-        
+        // Try multiple replacement patterns
         $modified = false;
-        foreach ($patterns as $pattern => $replacement) {
-            if (preg_match($pattern, $content)) {
-                $content = preg_replace($pattern, $replacement, $content);
-                $modified = true;
-                break;
-            }
+        
+        // Pattern 1: Replace existing personal_access_token line
+        if (preg_match("/'personal_access_token'\s*=>/", $content)) {
+            $content = preg_replace(
+                "/'personal_access_token'\s*=>\s*[^,]+,/",
+                "'personal_access_token' => App\\Models\\PersonalAccessToken::class,",
+                $content
+            );
+            $modified = true;
+        }
+        // Pattern 2: Config doesn't have personal_access_token key - add it after 'return ['
+        elseif (!str_contains($content, 'personal_access_token')) {
+            $personalAccessTokenConfig = <<<'PHP'
+
+    /*
+    |--------------------------------------------------------------------------
+    | Personal Access Token Model
+    |--------------------------------------------------------------------------
+    |
+    | This option allows you to specify which model should be used for the
+    | personal access tokens. The model must be an extension of the
+    | PersonalAccessToken model provided by Laravel Sanctum.
+    |
+    */
+
+    'personal_access_token' => App\Models\PersonalAccessToken::class,
+
+PHP;
+            // Insert after 'return ['
+            $content = preg_replace(
+                '/return\s*\[\s*\n/',
+                "return [\n" . $personalAccessTokenConfig,
+                $content,
+                1
+            );
+            $modified = true;
         }
         
         if ($modified) {

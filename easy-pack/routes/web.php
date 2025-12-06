@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use EasyPack\Http\Controllers\Common\PagesController;
 
 /*
 |--------------------------------------------------------------------------
@@ -11,6 +12,19 @@ use Illuminate\Support\Facades\Route;
 | is enabled. They provide web-based authentication and admin dashboard.
 |
 */
+
+/*
+|--------------------------------------------------------------------------
+| Public Routes (Contact Us)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('web')->group(function () {
+    Route::get('/contact-us', [PagesController::class, 'contactUs'])->name('contact-us');
+    Route::post('/contact-us', [PagesController::class, 'postContactUs']);
+    Route::get('/privacy-policy', [PagesController::class, 'privacyPolicy'])->name('pages.privacy-policy');
+    Route::get('/terms-conditions', [PagesController::class, 'termsConditions'])->name('pages.terms-conditions');
+});
 
 // Only load if admin panel is enabled
 if (!function_exists('is_admin_panel_enabled') || !is_admin_panel_enabled()) {
@@ -142,6 +156,12 @@ Route::middleware(['web', 'auth'])->group(function () use (
         $DevicesController,
         $ManageDocumentationController
     ) {
+        // Page Content Management
+        $PageContentsController = 'EasyPack\\Http\\Controllers\\Manage\\PageContentsController';
+        Route::get('/pages', [$PageContentsController, 'index'])->name('pages.index');
+        Route::get('/pages/{slug}/edit', [$PageContentsController, 'edit'])->name('pages.edit');
+        Route::put('/pages/{slug}', [$PageContentsController, 'update'])->name('pages.update');
+
         // Documentation (if enabled)
         if (function_exists('has_module') && has_module('api_documentation')) {
             Route::get('/docs/api', [$ManageDocumentationController, 'index'])->name('documentation.index');
