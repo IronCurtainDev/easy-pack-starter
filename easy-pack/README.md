@@ -747,6 +747,30 @@ return [
 composer test
 ```
 
+## Documentation Guides
+
+Easy Pack includes comprehensive documentation for various features:
+
+- **[Installation Guide](INSTALLATION.md)** - Complete installation instructions with all options
+- **[View Customization Guide](VIEW_CUSTOMIZATION.md)** - 🎨 **NEW!** Comprehensive guide to customizing all Blade views
+- **[Page Management](PAGE_MANAGEMENT.md)** - Using the built-in page management system
+- **[API Key Authentication](API_KEY_AUTH.md)** - API key authentication setup and usage
+- **[Developer Guide](DEVELOPER_GUIDE_PAGES.md)** - Developer guide for extending page functionality
+- **[Upgrade Guide](UPGRADE.md)** - How to upgrade to newer versions
+
+### Quick Links
+
+**Customizing Views:**
+```bash
+# Publish all management views (users, roles, permissions, etc.)
+php artisan vendor:publish --tag=easypack-manage-views
+
+# Edit published views
+nano resources/views/vendor/easypack/manage/pages/index.blade.php
+```
+
+See [VIEW_CUSTOMIZATION.md](VIEW_CUSTOMIZATION.md) for detailed examples and best practices.
+
 ## Changelog
 
 Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.

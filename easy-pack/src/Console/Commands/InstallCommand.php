@@ -68,7 +68,7 @@ class InstallCommand extends Command
     public function handle(): int
     {
         $this->quickMode = $this->option('quick');
-        
+
         $this->components->info('🚀 Installing Easy Pack...');
         if ($this->quickMode) {
             $this->line('  <fg=cyan>Running in quick mode with MySQL defaults</>');
@@ -141,7 +141,7 @@ class InstallCommand extends Command
     protected function runPreflightChecks(): bool
     {
         $this->components->info('Pre-flight Checks');
-        
+
         $allPassed = true;
 
         // Check PHP version
@@ -157,7 +157,7 @@ class InstallCommand extends Command
         // Check required PHP extensions
         $requiredExtensions = ['pdo', 'mbstring', 'openssl', 'tokenizer', 'xml', 'ctype', 'json'];
         $dbDriver = $this->option('db') ?: 'mysql';
-        
+
         // Add database-specific extension
         $pdoExtensions = [
             'mysql' => 'pdo_mysql',
@@ -254,7 +254,7 @@ class InstallCommand extends Command
             $this->line("  <fg=yellow>⚠</> Could not automatically patch User model. Please update manually:");
             $this->line("    <fg=gray>Change parent class to: EasyPack\Models\User</>");
         }
-        
+
         $this->newLine();
     }
 
@@ -269,13 +269,13 @@ class InstallCommand extends Command
         if ($this->quickMode) {
             $appName = $this->option('app-name') ?: env('APP_NAME', 'Laravel');
             $dbDriver = 'mysql'; // MySQL is default for quick mode
-            
+
             // For quick mode, only ask for essential DB info if not provided
             $suggestedDbName = Str::slug($appName, '_');
             $dbName = $this->option('db-name') ?: $this->askWithDefault('Database name', $suggestedDbName);
             $dbUser = $this->option('db-user') ?: 'root';
             $dbPassword = $this->option('db-password') ?? $this->secret('Database password (press Enter for empty)') ?? '';
-            
+
             $envUpdates = [
                 'APP_NAME' => $this->formatEnvValue($appName),
                 'DB_CONNECTION' => $dbDriver,
@@ -285,7 +285,7 @@ class InstallCommand extends Command
                 'DB_USERNAME' => $dbUser,
                 'DB_PASSWORD' => $this->formatEnvValue($dbPassword),
             ];
-            
+
             $this->line("  <fg=green>✓</> Quick mode: MySQL ({$dbName}@127.0.0.1:3306)");
         } else {
             // Interactive mode - ask for everything
@@ -320,7 +320,7 @@ class InstallCommand extends Command
             } else {
                 // Other databases
                 $suggestedDbName = Str::slug($appName, '_');
-                
+
                 $dbHost = $this->option('db-host') ?: $this->askWithDefault('Database host', '127.0.0.1');
                 $dbPort = $this->option('db-port') ?: $this->databaseDrivers[$dbDriver]['port'];
                 $dbName = $this->option('db-name') ?: $this->askWithDefault('Database name', $suggestedDbName);
@@ -343,10 +343,10 @@ class InstallCommand extends Command
 
         // Update .env file
         $this->updateEnvFile($envUpdates);
-        
+
         // Clear config cache
         Artisan::call('config:clear', [], $this->output);
-        
+
         $this->line("  <fg=green>✓</> Environment configured");
         $this->line("  <fg=green>✓</> API key configuration added");
         $this->newLine();
@@ -418,28 +418,28 @@ class InstallCommand extends Command
     protected function publishConfigs(): void
     {
         $this->components->info('Step 2: Publishing Configuration');
-        
+
         // Publish Oxygen config
         Artisan::call('vendor:publish', [
             '--tag' => 'easypack-config',
             '--force' => $this->option('force'),
         ]);
-        
+
         // Publish Spatie Permission config
         Artisan::call('vendor:publish', [
             '--provider' => 'Spatie\\Permission\\PermissionServiceProvider',
             '--force' => $this->option('force'),
         ]);
-        
+
         // Publish docs assets (swagger.html, apidoc.json)
         Artisan::call('vendor:publish', [
             '--tag' => 'easypack-docs',
             '--force' => $this->option('force'),
         ]);
-        
+
         // Configure auth.php to add sanctum guard
         $this->configureSanctumGuard();
-        
+
         $this->line("  <fg=green>✓</> Config files published");
         $this->line("  <fg=green>✓</> API documentation assets published");
         $this->newLine();
@@ -451,23 +451,23 @@ class InstallCommand extends Command
     protected function configureSanctumGuard(): void
     {
         $authConfigPath = config_path('auth.php');
-        
+
         if (!$this->files->exists($authConfigPath)) {
             $this->line("  <fg=yellow>⚠</> auth.php not found, skipping sanctum guard configuration");
             return;
         }
-        
+
         $content = $this->files->get($authConfigPath);
-        
+
         // Check if sanctum guard already exists
         if (str_contains($content, "'sanctum'")) {
             $this->line("  <fg=green>✓</> Sanctum guard already configured");
             return;
         }
-        
+
         // Find the guards array and add sanctum guard after web
         $pattern = "/'web' => \[\s*'driver' => 'session',\s*'provider' => 'users',\s*\],/s";
-        
+
         if (preg_match($pattern, $content)) {
             $replacement = "'web' => [
             'driver' => 'session',
@@ -478,7 +478,7 @@ class InstallCommand extends Command
             'driver' => 'sanctum',
             'provider' => 'users',
         ],";
-            
+
             $content = preg_replace($pattern, $replacement, $content);
             $this->files->put($authConfigPath, $content);
             $this->line("  <fg=green>✓</> Sanctum guard added to auth.php");
@@ -493,12 +493,12 @@ class InstallCommand extends Command
     protected function publishMigrations(): void
     {
         $this->components->info('Step 3: Publishing Migrations');
-        
+
         Artisan::call('vendor:publish', [
             '--tag' => 'easypack-migrations',
             '--force' => $this->option('force'),
         ]);
-        
+
         $this->line("  <fg=green>✓</> Migration files published");
         $this->newLine();
     }
@@ -509,21 +509,35 @@ class InstallCommand extends Command
     protected function publishModelsAndEntities(): void
     {
         $this->components->info('Step 4: Publishing Models & Entities');
-        
+
         // Publish models
         Artisan::call('vendor:publish', [
             '--tag' => 'easypack-models',
             '--force' => $this->option('force'),
         ]);
-        $this->line("  <fg=green>✓</> Models published (7 files)");
-        
+        $this->line("  <fg=green>✓</> Models published (8 files, including PageContent)");
+
         // Publish entities
         Artisan::call('vendor:publish', [
             '--tag' => 'easypack-entities',
             '--force' => $this->option('force'),
         ]);
         $this->line("  <fg=green>✓</> Entities published (6 files)");
-        
+
+        // Publish page management views
+        Artisan::call('vendor:publish', [
+            '--tag' => 'easypack-page-views',
+            '--force' => $this->option('force'),
+        ]);
+        $this->line("  <fg=green>✓</> Page management views published");
+
+        // Warning about customizations if force is used
+        if ($this->option('force') && $this->files->exists(resource_path('views/vendor/easypack/manage/pages/index.blade.php'))) {
+            $this->newLine();
+            $this->line("  <fg=yellow>⚠️  Warning: Existing views were overwritten (--force used)</>");
+            $this->line("     <fg=gray>If you had customizations, restore them from version control</>");
+        }
+
         $this->newLine();
     }
 
@@ -533,10 +547,10 @@ class InstallCommand extends Command
     protected function runMigrations(): void
     {
         $this->components->info('Step 6: Running Migrations');
-        
+
         // First, test database connection before attempting migrations
         $connectionTest = $this->testDatabaseConnection();
-        
+
         if ($connectionTest !== true) {
             $this->line("  <fg=red>✗</> Database connection failed");
             $this->line("    <fg=yellow>{$connectionTest}</>");
@@ -544,26 +558,26 @@ class InstallCommand extends Command
             $this->newLine();
             return;
         }
-        
+
         // Clear all caches to ensure fresh .env values are used
         exec('cd ' . base_path() . ' && php artisan config:clear 2>&1');
-        
+
         // Run migrate in a fresh process to pick up new .env values
         $output = [];
         $returnCode = 0;
         exec('cd ' . base_path() . ' && php artisan migrate --force 2>&1', $output, $returnCode);
-        
+
         if ($returnCode === 0) {
             $this->line("  <fg=green>✓</> Migrations completed");
         } else {
             $outputStr = implode(' ', $output);
-            
+
             // Check for common issues (case-insensitive)
             $outputLower = strtolower($outputStr);
-            
+
             // Debug: uncomment to see raw output
             // $this->line("DEBUG: " . substr($outputStr, 0, 300));
-            
+
             if (str_contains($outputLower, 'already exists') || str_contains($outputLower, '42s01') || str_contains($outputLower, '1050')) {
                 $this->line("  <fg=yellow>⚠</> Some tables already exist");
                 $this->line("    <fg=yellow>Run 'php artisan migrate:fresh' for a clean install</>");
@@ -593,10 +607,10 @@ class InstallCommand extends Command
             }
             $this->line("    <fg=gray>Run 'php artisan migrate' manually to see full error.</>");
         }
-        
+
         $this->newLine();
     }
-    
+
     /**
      * Test database connection using the .env file directly.
      * Will attempt to create the database if it doesn't exist.
@@ -607,11 +621,11 @@ class InstallCommand extends Command
         if (!$this->files->exists($envPath)) {
             return 'No .env file found';
         }
-        
+
         // Parse .env file directly to get fresh values
         $envContent = $this->files->get($envPath);
         $envVars = [];
-        
+
         foreach (explode("\n", $envContent) as $line) {
             $line = trim($line);
             if (empty($line) || str_starts_with($line, '#')) {
@@ -623,9 +637,9 @@ class InstallCommand extends Command
                 $envVars[trim($key)] = $value;
             }
         }
-        
+
         $driver = $envVars['DB_CONNECTION'] ?? 'mysql';
-        
+
         // Skip connection test for SQLite
         if ($driver === 'sqlite') {
             $dbPath = $envVars['DB_DATABASE'] ?? database_path('database.sqlite');
@@ -634,13 +648,13 @@ class InstallCommand extends Command
             }
             return true;
         }
-        
+
         $host = $envVars['DB_HOST'] ?? '127.0.0.1';
         $port = $envVars['DB_PORT'] ?? '3306';
         $database = $envVars['DB_DATABASE'] ?? '';
         $username = $envVars['DB_USERNAME'] ?? 'root';
         $password = $envVars['DB_PASSWORD'] ?? '';
-        
+
         try {
             $dsn = match ($driver) {
                 'mysql' => "mysql:host={$host};port={$port};dbname={$database}",
@@ -648,16 +662,16 @@ class InstallCommand extends Command
                 'sqlsrv' => "sqlsrv:Server={$host},{$port};Database={$database}",
                 default => "mysql:host={$host};port={$port};dbname={$database}",
             };
-            
+
             $pdo = new \PDO($dsn, $username, $password, [
                 \PDO::ATTR_TIMEOUT => 5,
                 \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
             ]);
-            
+
             return true;
         } catch (\PDOException $e) {
             $message = $e->getMessage();
-            
+
             // If database doesn't exist, try to create it
             if (str_contains($message, 'Unknown database') || str_contains($message, '1049')) {
                 $created = $this->tryCreateDatabase($driver, $host, $port, $database, $username, $password);
@@ -667,7 +681,7 @@ class InstallCommand extends Command
                 }
                 return $created; // Return error message if creation failed
             }
-            
+
             if (str_contains($message, 'Access denied')) {
                 return "Access denied for user '{$username}'@'{$host}'. Check your password.";
             } elseif (str_contains($message, 'Connection refused')) {
@@ -675,11 +689,11 @@ class InstallCommand extends Command
             } elseif (str_contains($message, 'could not find driver')) {
                 return "PHP {$driver} driver not installed. Install php-{$driver} extension.";
             }
-            
+
             return $message;
         }
     }
-    
+
     /**
      * Try to create the database if it doesn't exist.
      */
@@ -693,32 +707,32 @@ class InstallCommand extends Command
                 'sqlsrv' => "sqlsrv:Server={$host},{$port}",
                 default => "mysql:host={$host};port={$port}",
             };
-            
+
             $pdo = new \PDO($dsn, $username, $password, [
                 \PDO::ATTR_TIMEOUT => 5,
                 \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
             ]);
-            
+
             // Create database with appropriate syntax
             $sql = match ($driver) {
                 'mysql' => "CREATE DATABASE IF NOT EXISTS `{$database}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci",
                 'pgsql' => "CREATE DATABASE \"{$database}\"",
                 default => "CREATE DATABASE `{$database}`",
             };
-            
+
             $pdo->exec($sql);
             return true;
-            
+
         } catch (\PDOException $e) {
             $message = $e->getMessage();
-            
+
             if (str_contains($message, 'Access denied')) {
                 return "Cannot create database: Access denied. Create '{$database}' manually.";
             } elseif (str_contains($message, 'already exists')) {
                 // Database exists now, that's fine
                 return true;
             }
-            
+
             return "Cannot create database '{$database}': " . $message;
         }
     }
@@ -729,28 +743,28 @@ class InstallCommand extends Command
     protected function runSeeders(): void
     {
         $this->components->info('Step 7: Seeding Database');
-        
+
         // First, publish the DatabaseSeeder and UsersSeeder stubs to replace Laravel defaults
         $this->publishSeederStubs();
-        
+
         // Test database connection first
         $connectionTest = $this->testDatabaseConnection();
-        
+
         if ($connectionTest !== true) {
             $this->line("  <fg=yellow>⚠</> Seeding skipped - database connection issue");
             $this->line("    <fg=yellow>Run 'php artisan db:seed' manually after fixing the connection.</>");
             $this->newLine();
             return;
         }
-        
+
         // Clear config cache to ensure fresh .env values
         exec('cd ' . base_path() . ' && php artisan config:clear 2>&1');
-        
+
         // Run seeder in a fresh process to pick up new .env values
         $output = [];
         $returnCode = 0;
         exec('cd ' . base_path() . ' && php artisan db:seed --class="Oxygen\\Starter\\Database\\Seeders\\EasyPackSeeder" --force 2>&1', $output, $returnCode);
-        
+
         if ($returnCode === 0) {
             $this->line("  <fg=green>✓</> Database seeded (roles, permissions, settings)");
             $this->line("    <fg=gray>Users: test@example.com, admin@example.com, superadmin@example.com</>");
@@ -759,10 +773,10 @@ class InstallCommand extends Command
             $this->line("  <fg=yellow>⚠</> Seeding skipped");
             $this->line("    <fg=yellow>Run 'php artisan db:seed' manually.</>");
         }
-        
+
         $this->newLine();
     }
-    
+
     /**
      * Publish DatabaseSeeder and UsersSeeder stubs to replace Laravel defaults.
      * This ensures 'php artisan migrate:fresh --seed' creates all admin users.
@@ -774,7 +788,7 @@ class InstallCommand extends Command
             '--tag' => 'easypack-seeders',
             '--force' => true,
         ]);
-        
+
         $this->line("  <fg=green>✓</> DatabaseSeeder.php updated (calls EasyPackSeeder)");
         $this->line("  <fg=green>✓</> UsersSeeder.php published (admin users)");
     }
@@ -785,14 +799,14 @@ class InstallCommand extends Command
     protected function publishControllers(): void
     {
         $this->components->info('Step 5: Publishing Controllers');
-        
+
         // Always publish API controllers (core functionality)
         Artisan::call('vendor:publish', [
             '--tag' => 'easypack-api-controllers',
             '--force' => $this->option('force'),
         ]);
         $this->line("  <fg=green>✓</> API Controllers published (5 files)");
-        
+
         // Publish Admin controllers (unless skipped)
         if (!$this->option('skip-admin-controllers')) {
             Artisan::call('vendor:publish', [
@@ -803,7 +817,7 @@ class InstallCommand extends Command
         } else {
             $this->line("  <fg=yellow>⊘</> Admin Controllers skipped");
         }
-        
+
         // Publish Auth controllers (unless skipped)
         if (!$this->option('skip-auth-controllers')) {
             Artisan::call('vendor:publish', [
@@ -814,10 +828,10 @@ class InstallCommand extends Command
         } else {
             $this->line("  <fg=yellow>⊘</> Auth Controllers skipped");
         }
-        
+
         // Enable local controllers in .env
         $this->enableLocalControllersInEnv();
-        
+
         $this->newLine();
     }
 
@@ -860,12 +874,12 @@ class InstallCommand extends Command
     {
         $this->components->info('✅ Easy Pack installed successfully!');
         $this->newLine();
-        
+
         // Show what was installed
         $this->components->twoColumnDetail('<fg=cyan>Published Files</>', '<fg=cyan>Location</>');
-        $this->components->twoColumnDetail('7 Models', 'app/Models/');
+        $this->components->twoColumnDetail('8 Models (inc. PageContent)', 'app/Models/');
         $this->components->twoColumnDetail('6 Entities', 'app/Entities/');
-        
+
         if (!$this->option('skip-controllers')) {
             $this->components->twoColumnDetail('5 API Controllers', 'app/Http/Controllers/Api/V1/');
             if (!$this->option('skip-admin-controllers')) {
@@ -875,27 +889,44 @@ class InstallCommand extends Command
                 $this->components->twoColumnDetail('2 Auth Controllers', 'app/Http/Controllers/Auth/');
             }
         }
-        
+
         $this->components->twoColumnDetail('4 Config files', 'config/');
-        $this->components->twoColumnDetail('7 Migrations', 'database/migrations/');
-        $this->components->twoColumnDetail('2 Seeders', 'database/seeders/');
+        $this->components->twoColumnDetail('8 Migrations (inc. pages)', 'database/migrations/');
+        $this->components->twoColumnDetail('3 Seeders (inc. pages)', 'database/seeders/');
+        $this->components->twoColumnDetail('Page Management Views', 'resources/views/vendor/easypack/');
         $this->components->twoColumnDetail('Swagger UI', 'public/docs/swagger.html');
-        
+
         if (!$this->option('skip-routes')) {
             $this->components->twoColumnDetail('API Routes', 'routes/api.php');
+            $this->components->twoColumnDetail('Page Routes', 'routes/pages.php');
         }
-        
+
         $this->newLine();
         $this->components->info('👤 Default Users (password: password)');
         $this->line('  <fg=gray>test@example.com      - admin role</>');
         $this->line('  <fg=gray>admin@example.com     - admin role</>');
         $this->line('  <fg=gray>superadmin@example.com - super-admin role</>');
-        
+
         $this->newLine();
-        $this->components->info('📋 Customization');
+        $this->components->info('🎨 View Customization');
+        $this->line('  <fg=green>✓</> Page views published to resources/views/vendor/easypack/');
+        $this->line('  <fg=yellow>📌 Publish ALL management views for full customization:</>');
+        $this->line('     <fg=cyan>php artisan vendor:publish --tag=easypack-manage-views</>');
+        $this->line('  <fg=gray>This includes: users, roles, permissions, layouts, and more</>');
+        $this->line('  <fg=gray>See VIEW_CUSTOMIZATION.md for detailed guide</>');
+
+        $this->newLine();
+        $this->components->info('📋 Controller Customization');
         $this->line('  <fg=gray>Controllers are now in app/Http/Controllers/ - edit them freely!</>');
         $this->line('  <fg=gray>php artisan easypack:publish --customizable  # Republish all customizable files</>');
-        
+
+        $this->newLine();
+        $this->components->info('📄 Page Management System');
+        $this->line('  <fg=green>✓</> Admin panel with page editor enabled');
+        $this->line('  <fg=gray>Login at /login and go to "Pages" in sidebar</>');
+        $this->line('  <fg=gray>Create/Edit pages: /manage/pages</>');
+        $this->line('  <fg=gray>Public pages: /privacy-policy, /terms-conditions</>');
+
         $this->newLine();
         $this->components->info('📖 API Documentation');
         if ($this->option('with-docs')) {
@@ -904,17 +935,19 @@ class InstallCommand extends Command
             $this->line('  <fg=gray>php artisan generate:docs  # Generate Swagger/OpenAPI documentation</>');
         }
         $this->line('  <fg=gray>Visit /docs/swagger.html to view interactive API docs</>');
-        
+
         $this->newLine();
         $this->components->info('🔧 Available Commands');
         $this->line('  <fg=gray>php artisan easypack:publish    # Publish customizable files</>');
         $this->line('  <fg=gray>php artisan generate:docs     # Generate API documentation</>');
         $this->line('  <fg=gray>php artisan make:easypack:crud  # Generate CRUD scaffold</>');
-        
+
         $this->newLine();
         $this->components->info('🚀 Start the server');
         $this->line('  <fg=gray>php artisan serve</>');
-        $this->line('  <fg=gray>Then visit: http://localhost:8000/api/v1/guests</>');
+        $this->line('  <fg=gray>API: http://localhost:8000/api/v1/guests</>');
+        $this->line('  <fg=gray>Admin: http://localhost:8000/login (admin@example.com / password)</>');
+        $this->line('  <fg=gray>Pages: http://localhost:8000/manage/pages</>');
     }
 
     /**
@@ -923,18 +956,57 @@ class InstallCommand extends Command
     protected function publishAndConfigureRoutes(): void
     {
         $this->components->info('Step 8: Publishing & Configuring Routes');
-        
-        // Publish routes
+
+        // Publish API routes
         Artisan::call('vendor:publish', [
             '--tag' => 'easypack-routes',
             '--force' => $this->option('force'),
         ]);
         $this->line("  <fg=green>✓</> API routes published to routes/api.php");
-        
+
+        // Publish page management routes
+        Artisan::call('vendor:publish', [
+            '--tag' => 'easypack-page-routes',
+            '--force' => $this->option('force'),
+        ]);
+        $this->line("  <fg=green>✓</> Page management routes published to routes/pages.php");
+
+        // Add pages.php to web.php if not already included
+        $this->includePagesRoutes();
+
         // Configure Laravel 11+ bootstrap/app.php
         $this->configureBootstrapApp();
-        
+
         $this->newLine();
+    }
+
+    /**
+     * Include pages.php routes in web.php
+     */
+    protected function includePagesRoutes(): void
+    {
+        $webRoutesPath = base_path('routes/web.php');
+
+        if (!$this->files->exists($webRoutesPath)) {
+            $this->line("  <fg=yellow>⚠</> routes/web.php not found");
+            return;
+        }
+
+        $content = $this->files->get($webRoutesPath);
+
+        // Check if pages.php is already included
+        if (str_contains($content, "require __DIR__.'/pages.php'") ||
+            str_contains($content, 'pages.php')) {
+            $this->line("  <fg=green>✓</> Page routes already included in web.php");
+            return;
+        }
+
+        // Add include at the end of the file
+        $includeStatement = "\n// Page Management Routes\nrequire __DIR__.'/pages.php';\n";
+        $newContent = rtrim($content) . $includeStatement;
+
+        $this->files->put($webRoutesPath, $newContent);
+        $this->line("  <fg=green>✓</> Page routes included in routes/web.php");
     }
 
     /**
@@ -943,59 +1015,59 @@ class InstallCommand extends Command
     protected function configureBootstrapApp(): void
     {
         $bootstrapPath = base_path('bootstrap/app.php');
-        
+
         if (!$this->files->exists($bootstrapPath)) {
             $this->line("  <fg=yellow>⚠</> bootstrap/app.php not found (Laravel 10 or earlier?)");
             return;
         }
-        
+
         $content = $this->files->get($bootstrapPath);
-        
+
         // Check if this is Laravel 11+ style (has Application::configure)
         if (!str_contains($content, 'Application::configure')) {
             $this->line("  <fg=gray>-</> Laravel 10 detected, skipping bootstrap/app.php configuration");
             return;
         }
-        
+
         // Check if API routes are already configured
-        if (str_contains($content, "api: __DIR__.'/../routes/api.php'") || 
+        if (str_contains($content, "api: __DIR__.'/../routes/api.php'") ||
             str_contains($content, 'api:') && str_contains($content, 'routes/api.php')) {
             $this->line("  <fg=green>✓</> API routes already configured in bootstrap/app.php");
             return;
         }
-        
+
         // Find withRouting and add api route
         // Pattern: ->withRouting(\n    web: ... ,
         $pattern = '/->withRouting\(\s*\n(\s*)web:\s*__DIR__\s*\.\s*\'\/\.\.\/routes\/web\.php\'/';
-        
+
         if (preg_match($pattern, $content, $matches)) {
             $indent = $matches[1];
             $replacement = "->withRouting(\n{$indent}web: __DIR__.'/../routes/web.php',\n{$indent}api: __DIR__.'/../routes/api.php'";
-            
+
             $newContent = preg_replace($pattern, $replacement, $content);
-            
+
             if ($newContent !== $content) {
                 $this->files->put($bootstrapPath, $newContent);
                 $this->line("  <fg=green>✓</> API routes configured in bootstrap/app.php");
                 return;
             }
         }
-        
+
         // Alternative pattern for different formatting
         $altPattern = '/->withRouting\(\s*web:\s*__DIR__\s*\.\s*\'\/\.\.\/routes\/web\.php\'/';
-        
+
         if (preg_match($altPattern, $content)) {
             $replacement = "->withRouting(\n        web: __DIR__.'/../routes/web.php',\n        api: __DIR__.'/../routes/api.php'";
-            
+
             $newContent = preg_replace($altPattern, $replacement, $content);
-            
+
             if ($newContent !== $content) {
                 $this->files->put($bootstrapPath, $newContent);
                 $this->line("  <fg=green>✓</> API routes configured in bootstrap/app.php");
                 return;
             }
         }
-        
+
         // If we couldn't auto-configure, show manual instructions
         $this->line("  <fg=yellow>⚠</> Could not auto-configure bootstrap/app.php");
         $this->line("    <fg=gray>Add this to withRouting() in bootstrap/app.php:</>");
@@ -1008,9 +1080,9 @@ class InstallCommand extends Command
     protected function configureSanctumConfig(): void
     {
         $this->components->info('Step 9: Configuring Sanctum');
-        
+
         $sanctumConfigPath = config_path('sanctum.php');
-        
+
         // If sanctum config doesn't exist, publish it first
         if (!$this->files->exists($sanctumConfigPath)) {
             Artisan::call('vendor:publish', [
@@ -1019,25 +1091,25 @@ class InstallCommand extends Command
             ]);
             $this->line("  <fg=green>✓</> Sanctum config published");
         }
-        
+
         if (!$this->files->exists($sanctumConfigPath)) {
             $this->line("  <fg=yellow>⚠</> Sanctum config not found, skipping");
             $this->newLine();
             return;
         }
-        
+
         $content = $this->files->get($sanctumConfigPath);
-        
+
         // Check if already configured with our custom model
         if (str_contains($content, 'App\\Models\\PersonalAccessToken')) {
             $this->line("  <fg=green>✓</> Sanctum already configured with custom PersonalAccessToken");
             $this->newLine();
             return;
         }
-        
+
         // Try multiple replacement patterns
         $modified = false;
-        
+
         // Pattern 1: Replace existing personal_access_token line
         if (preg_match("/'personal_access_token'\s*=>/", $content)) {
             $content = preg_replace(
@@ -1074,7 +1146,7 @@ PHP;
             );
             $modified = true;
         }
-        
+
         if ($modified) {
             $this->files->put($sanctumConfigPath, $content);
             $this->line("  <fg=green>✓</> Sanctum configured to use App\\Models\\PersonalAccessToken");
@@ -1082,7 +1154,7 @@ PHP;
             $this->line("  <fg=yellow>⚠</> Could not auto-configure Sanctum. Please update config/sanctum.php:");
             $this->line("    <fg=gray>'personal_access_token' => App\\Models\\PersonalAccessToken::class,</>");
         }
-        
+
         $this->newLine();
     }
 
@@ -1092,16 +1164,16 @@ PHP;
     protected function ensureAppKeyGenerated(): void
     {
         $this->components->info('Step 10: Application Key');
-        
+
         $envPath = base_path('.env');
         if (!$this->files->exists($envPath)) {
             $this->line("  <fg=yellow>⚠</> .env file not found");
             $this->newLine();
             return;
         }
-        
+
         $envContent = $this->files->get($envPath);
-        
+
         // Check if APP_KEY is set
         if (preg_match('/^APP_KEY=.+$/m', $envContent)) {
             $key = env('APP_KEY');
@@ -1111,11 +1183,11 @@ PHP;
                 return;
             }
         }
-        
+
         // Generate new key
         Artisan::call('key:generate', ['--force' => true]);
         $this->line("  <fg=green>✓</> Application key generated");
-        
+
         $this->newLine();
     }
 
@@ -1125,12 +1197,12 @@ PHP;
     protected function generateApiDocs(): void
     {
         $this->components->info('Step 11: Generating API Documentation');
-        
+
         // Run generate:docs command
         $output = [];
         $returnCode = 0;
         exec('cd ' . base_path() . ' && php artisan generate:docs 2>&1', $output, $returnCode);
-        
+
         if ($returnCode === 0) {
             $this->line("  <fg=green>✓</> API documentation generated");
             $this->line("    <fg=gray>View at: /docs/swagger.html</>");
@@ -1138,7 +1210,7 @@ PHP;
             $this->line("  <fg=yellow>⚠</> Documentation generation had issues");
             $this->line("    <fg=gray>Run 'php artisan generate:docs' manually to see details.</>");
         }
-        
+
         $this->newLine();
     }
 
@@ -1148,11 +1220,11 @@ PHP;
     protected function clearAllCaches(): void
     {
         $this->components->info('Step 12: Clearing Caches');
-        
+
         exec('cd ' . base_path() . ' && php artisan config:clear 2>&1');
         exec('cd ' . base_path() . ' && php artisan route:clear 2>&1');
         exec('cd ' . base_path() . ' && php artisan view:clear 2>&1');
-        
+
         $this->line("  <fg=green>✓</> All caches cleared");
         $this->newLine();
     }

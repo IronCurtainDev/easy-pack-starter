@@ -159,8 +159,11 @@ Route::middleware(['web', 'auth'])->group(function () use (
         // Page Content Management
         $PageContentsController = 'EasyPack\\Http\\Controllers\\Manage\\PageContentsController';
         Route::get('/pages', [$PageContentsController, 'index'])->name('pages.index');
+        Route::get('/pages/create', [$PageContentsController, 'create'])->name('pages.create');
+        Route::post('/pages', [$PageContentsController, 'store'])->name('pages.store');
         Route::get('/pages/{slug}/edit', [$PageContentsController, 'edit'])->name('pages.edit');
         Route::put('/pages/{slug}', [$PageContentsController, 'update'])->name('pages.update');
+        Route::delete('/pages/{slug}', [$PageContentsController, 'destroy'])->name('pages.destroy');
 
         // Documentation (if enabled)
         if (function_exists('has_module') && has_module('api_documentation')) {

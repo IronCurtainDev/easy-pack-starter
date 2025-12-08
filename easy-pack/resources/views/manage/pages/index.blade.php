@@ -14,7 +14,28 @@
                 </ol>
             </nav>
         </div>
+        <div>
+            <a href="{{ route('manage.pages.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i> Create New Page
+            </a>
+        </div>
     </div>
+
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
 
     <div class="card">
         <div class="card-body">
@@ -33,7 +54,7 @@
                                 <th>Slug</th>
                                 <th>Status</th>
                                 <th>Last Updated</th>
-                                <th width="100">Actions</th>
+                                <th width="150">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -54,9 +75,25 @@
                                     </td>
                                     <td>{{ $page->updated_at->format('M d, Y h:i A') }}</td>
                                     <td>
-                                        <a href="{{ route('manage.pages.edit', $page->slug) }}" class="btn btn-sm btn-outline-primary" title="Edit">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
+                                        <div class="d-flex gap-1">
+                                            <a href="{{ route('manage.pages.edit', $page->slug) }}" class="btn btn-sm btn-outline-primary" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            @if(!in_array($page->slug, ['privacy-policy', 'terms-conditions']))
+                                                <form action="{{ route('manage.pages.destroy', $page->slug) }}" method="POST" class="d-inline"
+                                                      onsubmit="return confirm('Are you sure you want to delete this page?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            @else
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="System page cannot be deleted">
+                                                    <i class="fas fa-lock"></i>
+                                                </button>
+                                            @endif
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach

@@ -52,6 +52,7 @@ class PublishCustomizableCommand extends Command
             'stubs/models/Invitation.stub' => 'app/Models/Invitation.php',
             'stubs/models/PushNotification.stub' => 'app/Models/PushNotification.php',
             'stubs/models/NotificationPreference.stub' => 'app/Models/NotificationPreference.php',
+            'stubs/models/PageContent.stub' => 'app/Models/PageContent.php',
         ],
         'api-controllers' => [
             'stubs/controllers/Api/AuthController.stub' => 'app/Http/Controllers/Api/AuthController.php',

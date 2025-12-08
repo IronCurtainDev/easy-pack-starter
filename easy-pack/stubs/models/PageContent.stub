@@ -1,0 +1,21 @@
+<?php
+
+namespace App\Models;
+
+use EasyPack\Models\PageContent as EasyPackPageContent;
+
+/**
+ * Page Content Model
+ *
+ * This model extends the Easy Pack PageContent model.
+ * You can override methods or add custom functionality here.
+ *
+ * @property string $slug
+ * @property string $title
+ * @property string $content
+ * @property bool $is_active
+ */
+class PageContent extends EasyPackPageContent
+{
+    //
+}
