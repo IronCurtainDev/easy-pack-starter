@@ -69,7 +69,7 @@ class EasyPackServiceProvider extends ServiceProvider
 
     /**
      * Register abstraction layer services.
-     * 
+     *
      * These allow swapping implementations when upgrading to new
      * Laravel/Sanctum/Spatie versions without breaking changes.
      */
@@ -142,7 +142,7 @@ class EasyPackServiceProvider extends ServiceProvider
         $router->aliasMiddleware('api.key', \EasyPack\Http\Middleware\ApiAuthenticate::class);
         $router->aliasMiddleware('convert.x-access-token', \EasyPack\Http\Middleware\ConvertXAccessToken::class);
         $router->aliasMiddleware('track.device', \EasyPack\Http\Middleware\TrackDeviceActivity::class);
-        
+
         // Register Spatie Permission middleware aliases
         $router->aliasMiddleware('role', \Spatie\Permission\Middleware\RoleMiddleware::class);
         $router->aliasMiddleware('permission', \Spatie\Permission\Middleware\PermissionMiddleware::class);
@@ -229,6 +229,20 @@ class EasyPackServiceProvider extends ServiceProvider
                 __DIR__ . '/../resources/views' => resource_path('views/vendor/easypack'),
             ], 'easypack-views');
 
+            // Publish all management views (users, roles, permissions, pages, etc.)
+            // Recommended for developers who want full customization control
+            $this->publishes([
+                __DIR__ . '/../resources/views/manage' => resource_path('views/vendor/easypack/manage'),
+                __DIR__ . '/../resources/views/layouts' => resource_path('views/vendor/easypack/layouts'),
+                __DIR__ . '/../resources/views/auth' => resource_path('views/vendor/easypack/auth'),
+            ], 'easypack-manage-views');
+
+            // Publish page management views (auto-published during installation)
+            $this->publishes([
+                __DIR__ . '/../resources/views/manage/pages' => resource_path('views/vendor/easypack/manage/pages'),
+                __DIR__ . '/../resources/views/pages' => resource_path('views/vendor/easypack/pages'),
+            ], 'easypack-page-views');
+
             // Publish docs assets (swagger.html, apidoc.json)
             $this->publishes([
                 __DIR__ . '/../resources/assets/docs/swagger.html' => public_path('docs/swagger.html'),
@@ -244,7 +258,13 @@ class EasyPackServiceProvider extends ServiceProvider
                 __DIR__ . '/../stubs/models/Invitation.stub' => app_path('Models/Invitation.php'),
                 __DIR__ . '/../stubs/models/PushNotification.stub' => app_path('Models/PushNotification.php'),
                 __DIR__ . '/../stubs/models/NotificationPreference.stub' => app_path('Models/NotificationPreference.php'),
+                __DIR__ . '/../stubs/models/PageContent.stub' => app_path('Models/PageContent.php'),
             ], 'easypack-models');
+
+            // Publish page management routes
+            $this->publishes([
+                __DIR__ . '/../stubs/routes/pages.stub' => base_path('routes/pages.php'),
+            ], 'easypack-page-routes');
 
             // Publish customizable API controllers
             $this->publishes([
@@ -303,6 +323,7 @@ class EasyPackServiceProvider extends ServiceProvider
                 __DIR__ . '/../stubs/models/Invitation.stub' => app_path('Models/Invitation.php'),
                 __DIR__ . '/../stubs/models/PushNotification.stub' => app_path('Models/PushNotification.php'),
                 __DIR__ . '/../stubs/models/NotificationPreference.stub' => app_path('Models/NotificationPreference.php'),
+                __DIR__ . '/../stubs/models/PageContent.stub' => app_path('Models/PageContent.php'),
                 __DIR__ . '/../stubs/controllers/Api/V1/AuthController.stub' => app_path('Http/Controllers/Api/V1/AuthController.php'),
                 __DIR__ . '/../stubs/controllers/Api/V1/ProfileController.stub' => app_path('Http/Controllers/Api/V1/ProfileController.php'),
                 __DIR__ . '/../stubs/controllers/Api/V1/GuestController.stub' => app_path('Http/Controllers/Api/V1/GuestController.php'),
@@ -538,7 +559,7 @@ class EasyPackServiceProvider extends ServiceProvider
             if ($errors instanceof \Illuminate\Support\MessageBag) {
                 $errors = $errors->toArray();
             }
-            
+
             return response()->json([
                 'result' => false,
                 'message' => $message,

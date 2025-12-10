@@ -94,7 +94,7 @@ get_php_version_number() {
 check_php_version() {
     local version_id=$(get_php_version_number)
     local min_version_id=80200  # 8.2.0
-    
+
     if [ "$version_id" -ge "$min_version_id" ]; then
         return 0
     else
@@ -135,7 +135,7 @@ print_check() {
     local status=$1
     local name=$2
     local details=$3
-    
+
     if [ "$status" = "ok" ]; then
         echo -e "  ${GREEN}✓${NC} $name ${CYAN}$details${NC}"
     elif [ "$status" = "warn" ]; then
@@ -149,11 +149,11 @@ print_check() {
 run_dependency_checks() {
     local has_errors=false
     local missing_packages=""
-    
+
     echo -e "${CYAN}${BOLD}System Dependency Check${NC}"
     echo -e "${CYAN}════════════════════════════════════════════════════════════════${NC}"
     echo ""
-    
+
     # Check PHP
     echo -e "${BOLD}PHP:${NC}"
     if command_exists php; then
@@ -170,20 +170,20 @@ run_dependency_checks() {
         has_errors=true
         missing_packages="$missing_packages php8.2 php8.2-cli"
     fi
-    
+
     # Check PHP Extensions
     echo ""
     echo -e "${BOLD}PHP Extensions:${NC}"
     local required_extensions=("pdo" "mbstring" "xml" "curl" "zip" "tokenizer" "ctype" "json" "openssl")
     local db_extension="pdo_mysql"
-    
+
     if [ "$DB_TYPE" = "pgsql" ]; then
         db_extension="pdo_pgsql"
     elif [ "$DB_TYPE" = "sqlite" ]; then
         db_extension="pdo_sqlite"
     fi
     required_extensions+=("$db_extension")
-    
+
     for ext in "${required_extensions[@]}"; do
         if php_extension_loaded "$ext"; then
             print_check "ok" "$ext" ""
@@ -202,7 +202,7 @@ run_dependency_checks() {
             esac
         fi
     done
-    
+
     # Check Composer
     echo ""
     echo -e "${BOLD}Composer:${NC}"
@@ -214,7 +214,7 @@ run_dependency_checks() {
         has_errors=true
         missing_packages="$missing_packages composer"
     fi
-    
+
     # Check Database (optional)
     echo ""
     echo -e "${BOLD}Database ($DB_TYPE):${NC}"
@@ -237,7 +237,7 @@ run_dependency_checks() {
             print_check "warn" "PostgreSQL client not installed" "(optional)"
         fi
     fi
-    
+
     # Check other tools
     echo ""
     echo -e "${BOLD}Other Tools:${NC}"
@@ -246,13 +246,13 @@ run_dependency_checks() {
     else
         print_check "warn" "jq not installed" "(will use sed fallback)"
     fi
-    
+
     if command_exists git; then
         print_check "ok" "git" "(optional - for version control)"
     else
         print_check "warn" "git not installed" "(optional)"
     fi
-    
+
     # Check system resources
     echo ""
     echo -e "${BOLD}System Resources:${NC}"
@@ -262,14 +262,14 @@ run_dependency_checks() {
     else
         print_check "warn" "Low disk space" "(${available_space}MB - recommend 500MB+)"
     fi
-    
+
     if check_writable "."; then
         print_check "ok" "Directory writable" "($(pwd))"
     else
         print_check "fail" "Directory not writable" "($(pwd))"
         has_errors=true
     fi
-    
+
     # Check offline cache
     echo ""
     echo -e "${BOLD}Offline Cache:${NC}"
@@ -283,18 +283,18 @@ run_dependency_checks() {
             print_check "warn" "Offline cache not prepared" "(use --prepare-offline)"
         fi
     fi
-    
+
     # Summary
     echo ""
     echo -e "${CYAN}════════════════════════════════════════════════════════════════${NC}"
-    
+
     if [ "$has_errors" = true ]; then
         echo -e "${RED}${BOLD}Some dependencies are missing!${NC}"
         echo ""
-        
+
         # Remove duplicates from missing packages
         missing_packages=$(echo "$missing_packages" | tr ' ' '\n' | sort -u | tr '\n' ' ')
-        
+
         if [ -n "$missing_packages" ]; then
             echo -e "${YELLOW}To install missing dependencies, run:${NC}"
             echo ""
@@ -308,7 +308,7 @@ run_dependency_checks() {
             echo -e "${YELLOW}Or run this script with --install-deps to auto-install:${NC}"
             echo -e "  $0 --install-deps"
         fi
-        
+
         return 1
     else
         echo -e "${GREEN}${BOLD}All dependencies satisfied!${NC}"
@@ -321,7 +321,7 @@ install_dependencies() {
     echo -e "${CYAN}${BOLD}Installing System Dependencies${NC}"
     echo -e "${CYAN}════════════════════════════════════════════════════════════════${NC}"
     echo ""
-    
+
     # Check if running as root or with sudo
     if [ "$EUID" -ne 0 ]; then
         if ! command_exists sudo; then
@@ -332,25 +332,25 @@ install_dependencies() {
     else
         SUDO=""
     fi
-    
+
     echo -e "${YELLOW}This will install the following packages:${NC}"
     echo "  - PHP 8.2 and common extensions"
     echo "  - Composer"
     echo "  - jq (JSON processor)"
     echo ""
-    
+
     if [ "$QUICK_MODE" = false ]; then
         echo -e "${YELLOW}Press Enter to continue or Ctrl+C to cancel...${NC}"
         read
     fi
-    
+
     # Add PHP repository
     echo -e "${CYAN}Adding PHP repository...${NC}"
     $SUDO apt-get update -qq
     $SUDO apt-get install -y software-properties-common
     $SUDO add-apt-repository -y ppa:ondrej/php
     $SUDO apt-get update -qq
-    
+
     # Install PHP and extensions
     echo -e "${CYAN}Installing PHP 8.2...${NC}"
     $SUDO apt-get install -y \
@@ -367,7 +367,7 @@ install_dependencies() {
         php8.2-bcmath \
         php8.2-gd \
         php8.2-intl
-    
+
     # Install Composer
     if ! command_exists composer; then
         echo -e "${CYAN}Installing Composer...${NC}"
@@ -377,15 +377,15 @@ install_dependencies() {
         $SUDO chmod +x /usr/local/bin/composer
         cd - > /dev/null
     fi
-    
+
     # Install optional tools
     echo -e "${CYAN}Installing optional tools...${NC}"
     $SUDO apt-get install -y jq git unzip
-    
+
     echo ""
     echo -e "${GREEN}${BOLD}Dependencies installed successfully!${NC}"
     echo ""
-    
+
     # Re-run checks
     run_dependency_checks
 }
@@ -395,35 +395,35 @@ prepare_offline_cache() {
     echo -e "${CYAN}${BOLD}Preparing Offline Cache${NC}"
     echo -e "${CYAN}════════════════════════════════════════════════════════════════${NC}"
     echo ""
-    
+
     # Check dependencies first
     if ! command_exists composer; then
         echo -e "${RED}Error: Composer is required to prepare offline cache${NC}"
         exit 1
     fi
-    
+
     if ! command_exists php; then
         echo -e "${RED}Error: PHP is required to prepare offline cache${NC}"
         exit 1
     fi
-    
+
     # Create cache directory
     mkdir -p "$OFFLINE_CACHE"
-    
+
     # Step 1: Create a fresh Laravel project for caching
     echo -e "${CYAN}Step 1: Downloading Laravel project...${NC}"
     if [ -d "$LARAVEL_CACHE" ]; then
         echo -e "${YELLOW}Removing existing cache...${NC}"
         rm -rf "$LARAVEL_CACHE"
     fi
-    
+
     cd "$OFFLINE_CACHE"
     composer create-project laravel/laravel laravel-project --no-interaction
-    
+
     # Step 2: Add easy-pack to the cached project
     echo -e "${CYAN}Step 2: Adding Easy Pack dependencies...${NC}"
     cd "$LARAVEL_CACHE"
-    
+
     # Add local repository
     if command_exists jq; then
         jq --arg path "$EASYPACK_PATH" '.repositories = [{"type": "path", "url": $path, "options": {"symlink": false}}]' composer.json > composer.json.tmp
@@ -431,22 +431,22 @@ prepare_offline_cache() {
     else
         sed -i '2i\    "repositories": [{"type": "path", "url": "'"$EASYPACK_PATH"'", "options": {"symlink": false}}],' composer.json
     fi
-    
+
     # Install easy-pack (this downloads all dependencies)
     composer require easypack/starter:@dev --no-interaction
-    
+
     # Step 3: Cache the vendor directory
     echo -e "${CYAN}Step 3: Caching vendor packages...${NC}"
-    
+
     # Create a packages cache from composer cache
     COMPOSER_CACHE_DIR=$(composer config cache-dir 2>/dev/null || echo "$HOME/.cache/composer")
     if [ -d "$COMPOSER_CACHE_DIR" ]; then
         echo -e "${CYAN}Copying composer cache...${NC}"
         cp -r "$COMPOSER_CACHE_DIR" "$OFFLINE_CACHE/composer-cache"
     fi
-    
+
     cd "$SCRIPT_DIR"
-    
+
     echo ""
     echo -e "${GREEN}${BOLD}Offline cache prepared successfully!${NC}"
     echo ""
@@ -591,7 +591,7 @@ echo ""
 if [ -z "$PROJECT_NAME" ]; then
     echo -e "${YELLOW}Enter project name:${NC}"
     read -p "> " PROJECT_NAME
-    
+
     if [ -z "$PROJECT_NAME" ]; then
         echo -e "${RED}Project name is required${NC}"
         exit 1
@@ -634,11 +634,11 @@ if [ "$OFFLINE_MODE" = true ]; then
         echo -e "${YELLOW}Run --prepare-offline first on a machine with internet access${NC}"
         exit 1
     fi
-    
+
     echo -e "${CYAN}Copying from offline cache...${NC}"
     cp -r "$LARAVEL_CACHE" "$PROJECT_NAME"
     cd "$PROJECT_NAME"
-    
+
     # Update the repository path to point to the new location
     if command_exists jq; then
         jq --arg path "$EASYPACK_PATH" '.repositories = [{"type": "path", "url": $path, "options": {"symlink": true}}]' composer.json > composer.json.tmp
@@ -647,15 +647,15 @@ if [ "$OFFLINE_MODE" = true ]; then
         # Remove old repository and add new one
         sed -i 's|"url": "[^"]*easy-pack"|"url": "'"$EASYPACK_PATH"'"|g' composer.json
     fi
-    
+
     # Use cached composer packages
     if [ -d "$OFFLINE_CACHE/composer-cache" ]; then
         export COMPOSER_CACHE_DIR="$OFFLINE_CACHE/composer-cache"
     fi
-    
+
     # Regenerate autoloader with symlink to local easy-pack
     composer dump-autoload
-    
+
     echo -e "${GREEN}✓${NC} Laravel project created from cache"
 else
     # Online installation: download fresh
@@ -670,7 +670,7 @@ echo -e "${CYAN}Step 2: Configuring local Easy Pack repository...${NC}"
 if [ "$OFFLINE_MODE" = false ]; then
     # Only need to configure repository for online mode
     # (offline mode already has it configured from cache)
-    
+
     # Read current composer.json
     COMPOSER_JSON=$(cat composer.json)
 
@@ -755,6 +755,13 @@ echo "  Password: password"
 echo ""
 echo -e "${CYAN}API Documentation:${NC}"
 echo "  http://localhost:8000/docs/swagger.html"
+echo ""
+echo -e "${CYAN}View Customization:${NC}"
+echo "  Page views published to: resources/views/vendor/easypack/"
+echo "  For full customization (users, roles, etc.):"
+echo "  cd $PROJECT_NAME"
+echo "  php artisan vendor:publish --tag=easypack-manage-views"
+echo "  See easy-pack/VIEW_CUSTOMIZATION.md for detailed guide"
 echo ""
 echo -e "${CYAN}Portability Tips:${NC}"
 echo "  To use on another machine, copy the entire parent folder and run:"

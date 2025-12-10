@@ -9,6 +9,7 @@ A step-by-step guide to install and configure Easy Pack for your Laravel project
 - [Local Development (Before Packagist)](#local-development-before-packagist)
 - [Installation Options](#installation-options)
 - [What Gets Installed](#what-gets-installed)
+- [Customizing Views](#customizing-views)
 - [Verifying Installation](#verifying-installation)
 - [Upgrading Existing Projects](#upgrading-existing-projects)
 - [Troubleshooting](#troubleshooting)
@@ -225,6 +226,101 @@ PUT    /api/v1/profile
 PUT    /api/v1/profile/password
 ...and more
 ```
+
+---
+
+## Customizing Views
+
+**🎨 Easy Pack provides all views for full customization!**
+
+During installation, page management views are automatically published to `resources/views/vendor/easypack/`. You can customize any view to match your design requirements.
+
+### Views Published Automatically
+
+During `php artisan easypack:install`, these views are published:
+
+- **Page Management** (`resources/views/vendor/easypack/manage/pages/`)
+  - `index.blade.php` - List all pages
+  - `create.blade.php` - Create new page
+  - `edit.blade.php` - Edit existing page
+
+- **Public Pages** (`resources/views/vendor/easypack/pages/`)
+  - `privacy.blade.php` - Privacy policy
+  - `terms.blade.php` - Terms & conditions
+  - `contact-us.blade.php` - Contact page
+
+### Publishing Additional Management Views
+
+You can publish **all management views** for complete customization:
+
+```bash
+# Publish all Easy Pack views (users, roles, permissions, etc.)
+php artisan vendor:publish --tag=easypack-views
+
+# Or publish specific view categories
+php artisan vendor:publish --tag=easypack-manage-views      # All management views
+php artisan vendor:publish --tag=easypack-page-views        # Page views only (already done during install)
+```
+
+**Available Management Views** (after publishing `easypack-manage-views`):
+
+- **Users** (`resources/views/vendor/easypack/manage/users/`)
+  - `index.blade.php`, `create.blade.php`, `edit.blade.php`, `show.blade.php`
+  
+- **Roles** (`resources/views/vendor/easypack/manage/roles/`)
+  - `create.blade.php`, `edit.blade.php`, `users.blade.php`
+  
+- **Permissions** (`resources/views/vendor/easypack/manage/permissions/`)
+  - `index.blade.php`, `create.blade.php`, `edit.blade.php`
+  
+- **Push Notifications** (`resources/views/vendor/easypack/manage/push-notifications/`)
+  - `index.blade.php`, `create.blade.php`, `show.blade.php`
+  
+- **Invitations** (`resources/views/vendor/easypack/manage/invitations/`)
+  - `index.blade.php`, `create.blade.php`
+
+- **Dashboard, Devices, Documentation** and more...
+
+### How View Resolution Works
+
+Laravel automatically checks for customized views first:
+
+1. **First**: Checks `resources/views/vendor/easypack/` (your customized views)
+2. **Fallback**: Uses package views from `vendor/easypack/starter/resources/views/`
+
+This means you can:
+- Edit published views safely
+- Delete views you don't want to customize (package versions will be used)
+- Update Easy Pack without losing customizations
+
+### Re-publishing Views After Updates
+
+When you update Easy Pack, you may want to see what changed in the views:
+
+```bash
+# View differences (compare before re-publishing)
+diff -r resources/views/vendor/easypack/ vendor/easypack/starter/resources/views/
+
+# Re-publish with --force to overwrite (WARNING: loses customizations)
+php artisan vendor:publish --tag=easypack-views --force
+
+# Better approach: Merge changes manually or use version control
+```
+
+**💡 Best Practice**: Use version control (git) to track your customizations, making it easy to see and merge updates.
+
+### Example Customization
+
+After publishing, edit any view:
+
+```bash
+# Edit the pages list view
+nano resources/views/vendor/easypack/manage/pages/index.blade.php
+```
+
+Your changes will be immediately reflected when you visit `/manage/pages`.
+
+For detailed customization examples and best practices, see [VIEW_CUSTOMIZATION.md](VIEW_CUSTOMIZATION.md).
 
 ---
 

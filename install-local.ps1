@@ -17,13 +17,13 @@
 <#
 .SYNOPSIS
     Easy Pack - Local Development Installer for Windows
-    
+
 .DESCRIPTION
     This script automates the installation of a new Laravel project with Easy Pack
     when developing locally (before publishing to Packagist).
-    
+
     PORTABLE: Copy the entire folder to any Windows machine and run this script.
-    
+
     EXECUTION POLICY: If you get "running scripts is disabled" error, run:
         Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
     Then run this script again.
@@ -91,7 +91,7 @@
 param(
     [Parameter(Position = 0)]
     [string]$ProjectName = "",
-    
+
     [string]$DbName = "",
     [string]$DbUser = "root",
     [string]$DbPassword = "",
@@ -99,7 +99,7 @@ param(
     [string]$DbPort = "3306",
     [ValidateSet("mysql", "pgsql", "sqlite")]
     [string]$DbType = "mysql",
-    
+
     [switch]$Quick,
     [switch]$WithDocs,
     [switch]$CheckDeps,
@@ -176,7 +176,7 @@ function Get-PhpVersionNumber {
 function Test-PhpVersion {
     $versionId = Get-PhpVersionNumber
     $minVersionId = 80200  # 8.2.0
-    
+
     return $versionId -ge $minVersionId
 }
 
@@ -195,13 +195,13 @@ function Test-MySQLConnection {
     if (-not $exists) {
         return $false
     }
-    
+
     try {
         $mysqlArgs = @("-h", $DbHost, "-P", $DbPort, "-u", $DbUser, "-e", "SELECT 1")
         if ($DbPassword) {
             $mysqlArgs += "-p$DbPassword"
         }
-        
+
         & mysql $mysqlArgs 2>$null | Out-Null
         return $?
     }
@@ -239,21 +239,21 @@ function Write-Check($status, $name, $details) {
 function Invoke-DependencyChecks {
     $hasErrors = $false
     $missingPackages = @()
-    
+
     Write-Info ""
     Write-Info "════════════════════════════════════════════════════════════════"
     Write-Host ""
     Write-ColorOutput Cyan "System Dependency Check"
     Write-Info "════════════════════════════════════════════════════════════════"
     Write-Host ""
-    
+
     # Check PHP
     Write-Host ""
     Write-Host "PHP:" -ForegroundColor White
     if (Test-CommandExists "php") {
         $phpVersion = php -v 2>$null | Select-Object -First 1
         $phpVersion = $phpVersion -replace "^PHP\s+(\S+).*", '$1'
-        
+
         if (Test-PhpVersion) {
             Write-Check "ok" "PHP installed" "(v$phpVersion)"
         }
@@ -268,18 +268,18 @@ function Invoke-DependencyChecks {
         $hasErrors = $true
         $missingPackages += "php"
     }
-    
+
     # Check PHP Extensions
     Write-Host ""
     Write-Host "PHP Extensions:" -ForegroundColor White
     $requiredExtensions = @("pdo", "mbstring", "xml", "curl", "zip", "tokenizer", "ctype", "json", "openssl")
-    
+
     switch ($DbType) {
         "mysql" { $requiredExtensions += "pdo_mysql" }
         "pgsql" { $requiredExtensions += "pdo_pgsql" }
         "sqlite" { $requiredExtensions += "pdo_sqlite" }
     }
-    
+
     foreach ($ext in $requiredExtensions) {
         if (Test-PhpExtension $ext) {
             Write-Check "ok" $ext ""
@@ -290,7 +290,7 @@ function Invoke-DependencyChecks {
             $missingPackages += "php-$ext"
         }
     }
-    
+
     # Check Composer
     Write-Host ""
     Write-Host "Composer:" -ForegroundColor White
@@ -303,7 +303,7 @@ function Invoke-DependencyChecks {
         $hasErrors = $true
         $missingPackages += "composer"
     }
-    
+
     # Check Database
     Write-Host ""
     Write-Host "Database ($DbType):" -ForegroundColor White
@@ -331,7 +331,7 @@ function Invoke-DependencyChecks {
             Write-Check "warn" "PostgreSQL client not installed" "(optional)"
         }
     }
-    
+
     # Check other tools
     Write-Host ""
     Write-Host "Other Tools:" -ForegroundColor White
@@ -341,7 +341,7 @@ function Invoke-DependencyChecks {
     else {
         Write-Check "warn" "git not installed" "(optional)"
     }
-    
+
     # Check system resources
     Write-Host ""
     Write-Host "System Resources:" -ForegroundColor White
@@ -352,7 +352,7 @@ function Invoke-DependencyChecks {
     else {
         Write-Check "warn" "Low disk space" "(${availableSpace}MB - recommend 500MB+)"
     }
-    
+
     $currentPath = Get-Location
     if (Test-Path -Path $currentPath -PathType Container) {
         Write-Check "ok" "Directory writable" "($currentPath)"
@@ -361,7 +361,7 @@ function Invoke-DependencyChecks {
         Write-Check "fail" "Directory not writable" "($currentPath)"
         $hasErrors = $true
     }
-    
+
     # Check offline cache
     Write-Host ""
     Write-Host "Offline Cache:" -ForegroundColor White
@@ -377,16 +377,16 @@ function Invoke-DependencyChecks {
             Write-Check "warn" "Offline cache not prepared" "(use -PrepareOffline)"
         }
     }
-    
+
     # Summary
     Write-Host ""
     Write-Info "════════════════════════════════════════════════════════════════"
-    
+
     if ($hasErrors) {
         Write-Host ""
         Write-ColorOutput Red "Some dependencies are missing!"
         Write-Host ""
-        
+
         if ($missingPackages.Count -gt 0) {
             Write-ColorOutput Yellow "To install missing dependencies:"
             Write-Host ""
@@ -400,7 +400,7 @@ function Invoke-DependencyChecks {
             Write-ColorOutput Yellow "Or run this script with -InstallDeps to auto-install:"
             Write-Host "  .\install-local.ps1 -InstallDeps"
         }
-        
+
         return $false
     }
     else {
@@ -416,17 +416,17 @@ function Install-Dependencies {
     Write-ColorOutput Cyan "Installing System Dependencies"
     Write-Info "════════════════════════════════════════════════════════════════"
     Write-Host ""
-    
+
     # Check if Chocolatey is installed
     if (-not (Test-CommandExists "choco")) {
         Write-ColorOutput Yellow "Chocolatey is not installed. Installing Chocolatey..."
         Write-Host ""
-        
+
         try {
             Set-ExecutionPolicy Bypass -Scope Process -Force
             [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
             Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-            
+
             # Refresh environment variables
             $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
         }
@@ -435,34 +435,34 @@ function Install-Dependencies {
             exit 1
         }
     }
-    
+
     Write-ColorOutput Yellow "This will install the following packages:"
     Write-Host "  - PHP 8.2"
     Write-Host "  - Composer"
     Write-Host ""
-    
+
     if (-not $Quick) {
         Write-ColorOutput Yellow "Press Enter to continue or Ctrl+C to cancel..."
         Read-Host
     }
-    
+
     # Install PHP
     Write-ColorOutput Cyan "Installing PHP..."
     choco install php -y --version=8.2.0
-    
+
     # Install Composer
     if (-not (Test-CommandExists "composer")) {
         Write-ColorOutput Cyan "Installing Composer..."
         choco install composer -y
     }
-    
+
     # Refresh environment variables
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
-    
+
     Write-Host ""
     Write-ColorOutput Green "Dependencies installed successfully!"
     Write-Host ""
-    
+
     # Re-run checks
     Invoke-DependencyChecks
 }
@@ -473,35 +473,35 @@ function Start-OfflineCachePreparation {
     Write-ColorOutput Cyan "Preparing Offline Cache"
     Write-Info "════════════════════════════════════════════════════════════════"
     Write-Host ""
-    
+
     # Check dependencies first
     if (-not (Test-CommandExists "composer")) {
         Write-ColorOutput Red "Error: Composer is required to prepare offline cache"
         exit 1
     }
-    
+
     if (-not (Test-CommandExists "php")) {
         Write-ColorOutput Red "Error: PHP is required to prepare offline cache"
         exit 1
     }
-    
+
     # Create cache directory
     New-Item -ItemType Directory -Force -Path $OFFLINE_CACHE | Out-Null
-    
+
     # Step 1: Create a fresh Laravel project for caching
     Write-ColorOutput Cyan "Step 1: Downloading Laravel project..."
     if (Test-Path $LARAVEL_CACHE) {
         Write-ColorOutput Yellow "Removing existing cache..."
         Remove-Item -Recurse -Force $LARAVEL_CACHE
     }
-    
+
     Push-Location $OFFLINE_CACHE
     composer create-project laravel/laravel laravel-project --no-interaction
-    
+
     # Step 2: Add easy-pack to the cached project
     Write-ColorOutput Cyan "Step 2: Adding Easy Pack dependencies..."
     Push-Location $LARAVEL_CACHE
-    
+
     # Add local repository to composer.json
     $composerJson = Get-Content "composer.json" -Raw | ConvertFrom-Json
     $composerJson | Add-Member -MemberType NoteProperty -Name "repositories" -Value @(@{
@@ -512,13 +512,13 @@ function Start-OfflineCachePreparation {
             }
         }) -Force
     $composerJson | ConvertTo-Json -Depth 10 | Set-Content "composer.json"
-    
+
     # Install easy-pack (this downloads all dependencies)
     composer require easypack/starter:@dev --no-interaction
-    
+
     # Step 3: Cache the vendor directory
     Write-ColorOutput Cyan "Step 3: Caching vendor packages..."
-    
+
     # Create a packages cache from composer cache
     $composerCacheDir = composer config cache-dir 2>$null
     if (Test-Path $composerCacheDir) {
@@ -526,15 +526,15 @@ function Start-OfflineCachePreparation {
         $targetCache = Join-Path $OFFLINE_CACHE "composer-cache"
         Copy-Item -Recurse -Force $composerCacheDir $targetCache
     }
-    
+
     Pop-Location
     Pop-Location
-    
+
     Write-Host ""
     Write-ColorOutput Green "Offline cache prepared successfully!"
     Write-Host ""
     Write-ColorOutput Cyan "Cache location: $OFFLINE_CACHE"
-    
+
     $cacheSize = (Get-ChildItem $OFFLINE_CACHE -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB
     Write-ColorOutput Cyan "Cache size: $([math]::Round($cacheSize, 2))MB"
     Write-Host ""
@@ -617,7 +617,7 @@ Write-Host ""
 if (-not $ProjectName) {
     Write-ColorOutput Yellow "Enter project name:"
     $ProjectName = Read-Host "> "
-    
+
     if (-not $ProjectName) {
         Write-ColorOutput Red "Project name is required"
         exit 1
@@ -660,26 +660,26 @@ if ($Offline) {
         Write-ColorOutput Yellow "Run -PrepareOffline first on a machine with internet access"
         exit 1
     }
-    
+
     Write-ColorOutput Cyan "Copying from offline cache..."
     Copy-Item -Recurse $LARAVEL_CACHE $ProjectName
     Push-Location $ProjectName
-    
+
     # Update the repository path to point to the new location
     $composerJson = Get-Content "composer.json" -Raw | ConvertFrom-Json
     $composerJson.repositories[0].url = $EASYPACK_PATH
     $composerJson.repositories[0].options.symlink = $true
     $composerJson | ConvertTo-Json -Depth 10 | Set-Content "composer.json"
-    
+
     # Use cached composer packages
     $cachedComposerCache = Join-Path $OFFLINE_CACHE "composer-cache"
     if (Test-Path $cachedComposerCache) {
         $env:COMPOSER_CACHE_DIR = $cachedComposerCache
     }
-    
+
     # Regenerate autoloader with symlink to local easy-pack
     composer dump-autoload
-    
+
     Write-Success "Laravel project created from cache"
 }
 else {
@@ -695,10 +695,10 @@ Write-ColorOutput Cyan "Step 2: Configuring local Easy Pack repository..."
 if (-not $Offline) {
     # Only need to configure repository for online mode
     # (offline mode already has it configured from cache)
-    
+
     # Read current composer.json
     $composerJson = Get-Content "composer.json" -Raw | ConvertFrom-Json
-    
+
     # Add repositories section with local path
     $composerJson | Add-Member -MemberType NoteProperty -Name "repositories" -Value @(@{
             type    = "path"
@@ -707,7 +707,7 @@ if (-not $Offline) {
                 symlink = $true
             }
         }) -Force
-    
+
     $composerJson | ConvertTo-Json -Depth 10 | Set-Content "composer.json"
 }
 
@@ -724,10 +724,10 @@ if ($Offline) {
         Remove-Item -Recurse -Force $vendorEasypackPath
     }
     New-Item -ItemType Directory -Force -Path "vendor\easypack" | Out-Null
-    
+
     # Create junction instead of symlink (works without admin rights)
     cmd /c mklink /J "$vendorEasypackPath" "$EASYPACK_PATH" | Out-Null
-    
+
     composer dump-autoload
     Write-Success "Easy Pack linked from cache"
 }
@@ -786,6 +786,13 @@ Write-Host "  Password: password"
 Write-Host ""
 Write-ColorOutput Cyan "API Documentation:"
 Write-Host "  http://localhost:8000/docs/swagger.html"
+Write-Host ""
+Write-ColorOutput Cyan "View Customization:"
+Write-Host "  Page views published to: resources\views\vendor\easypack\"
+Write-Host "  For full customization (users, roles, etc.):"
+Write-Host "  cd $ProjectName"
+Write-Host "  php artisan vendor:publish --tag=easypack-manage-views"
+Write-Host "  See easy-pack\VIEW_CUSTOMIZATION.md for detailed guide"
 Write-Host ""
 Write-ColorOutput Cyan "Portability Tips:"
 Write-Host "  To use on another machine, copy the entire parent folder and run:"

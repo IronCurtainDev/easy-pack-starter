@@ -24,6 +24,43 @@ class PageContentsController extends Controller
     }
 
     /**
+     * Show the form for creating a new page.
+     *
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function create()
+    {
+        return view('easypack::manage.pages.create', [
+            'pageTitle' => 'Create New Page',
+        ]);
+    }
+
+    /**
+     * Store a newly created page.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'slug' => 'required|string|max:255|alpha_dash|unique:page_contents,slug',
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+            'is_active' => 'sometimes|boolean',
+        ]);
+
+        // Handle checkbox value
+        $validated['is_active'] = $request->has('is_active') ? true : false;
+
+        PageContent::create($validated);
+
+        return redirect()
+            ->route('manage.pages.index')
+            ->with('success', 'Page created successfully!');
+    }
+
+    /**
      * Show the form for editing a page.
      *
      * @param string $slug
@@ -68,5 +105,30 @@ class PageContentsController extends Controller
         return redirect()
             ->route('manage.pages.index')
             ->with('success', 'Page updated successfully!');
+    }
+
+    /**
+     * Remove the specified page.
+     *
+     * @param string $slug
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function destroy(string $slug)
+    {
+        $page = PageContent::where('slug', $slug)->firstOrFail();
+
+        // Prevent deletion of system pages
+        $systemPages = ['privacy-policy', 'terms-conditions'];
+        if (in_array($page->slug, $systemPages)) {
+            return redirect()
+                ->route('manage.pages.index')
+                ->with('error', 'System pages cannot be deleted.');
+        }
+
+        $page->delete();
+
+        return redirect()
+            ->route('manage.pages.index')
+            ->with('success', 'Page deleted successfully!');
     }
 }

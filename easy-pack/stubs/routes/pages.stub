@@ -1,0 +1,18 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+
+// This file contains page management routes
+// Feel free to customize or add new routes for your pages
+
+use EasyPack\Http\Controllers\Manage\PageContentsController;
+
+Route::prefix('manage')->name('manage.')->middleware(['web', 'auth', 'role:admin|super-admin'])->group(function () {
+    // Page Content Management
+    Route::get('/pages', [PageContentsController::class, 'index'])->name('pages.index');
+    Route::get('/pages/create', [PageContentsController::class, 'create'])->name('pages.create');
+    Route::post('/pages', [PageContentsController::class, 'store'])->name('pages.store');
+    Route::get('/pages/{slug}/edit', [PageContentsController::class, 'edit'])->name('pages.edit');
+    Route::put('/pages/{slug}', [PageContentsController::class, 'update'])->name('pages.update');
+    Route::delete('/pages/{slug}', [PageContentsController::class, 'destroy'])->name('pages.destroy');
+});
